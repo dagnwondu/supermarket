@@ -43,6 +43,25 @@ def product_list(request):
     # ------------------------
 
     return render(request, 'products.html', {'page_obj': page_obj})
+from django.shortcuts import render, redirect
+from .models import Category
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def add_category(request):
+    if request.method == "POST":
+        name = request.POST['name']
+        description = request.POST.get('description', '')
+        if Category.objects.filter(name=name).exists():
+            messages.error(request, "Category already exists.")
+        else:
+            Category.objects.create(name=name, description=description)
+            messages.success(request, f"Category '{name}' added successfully.")
+        return redirect('add_category')
+
+    categories = Category.objects.all()
+    return render(request, 'add_category.html', {'categories': categories})
 
 # @login_required
 # def add_product(request):

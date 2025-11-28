@@ -1,15 +1,19 @@
 from django.contrib import admin
-from .models import Product, StockHistory, Sale, DailySummary
+from .models import Product, StockHistory, Sale, DailySummary, Category
 
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'quantity', 'selling_price', 'buying_price', 'expiry_date', 'is_expired')
+    list_display = ('name', 'category', 'selling_price', 'buying_price', 'expiry_date', 'is_expired')
     list_filter = ('category', 'expiry_date')
     search_fields = ('name', 'barcode')
     ordering = ('name',)
 
-
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'description')
+    search_fields = ('name',)
+    ordering = ('name',)
 @admin.register(StockHistory)
 class StockHistoryAdmin(admin.ModelAdmin):
     list_display = ('product', 'quantity_added', 'date_added', 'expiry_date')
