@@ -2,28 +2,64 @@
 
 {% block content %}
 
-<div class="row g-3">
+<div class="row g-4">
 
-    <div class="col-md-4">
-        <div class="card card-simple p-3">
-            <h6>Total Products</h6>
-            <h3>{{ total_products }}</h3>
+    <div class="col-md-3">
+        <div class="card card-simple p-4 shadow-sm" style="border-left: 6px solid #ff7f6b;">
+            <h6 class="text-muted">Total Products</h6>
+            <h2 class="fw-bold text-dark">{{ total_products }}</h2>
         </div>
     </div>
 
-    <div class="col-md-4">
-        <div class="card card-simple p-3">
-            <h6>Today's Sales</h6>
-            <h3>{{ todays_sales }}</h3>
+    <div class="col-md-3">
+        <div class="card card-simple p-4 shadow-sm" style="border-left: 6px solid #ff9e8c;">
+            <h6 class="text-muted">Today's Sales</h6>
+            <h2 class="fw-bold text-dark">{{ todays_sales }}</h2>
         </div>
     </div>
 
-    <div class="col-md-4">
-        <div class="card card-simple p-3">
-            <h6>Low Stock Items</h6>
-            <h3>{{ low_stock_count }}</h3>
+    <div class="col-md-3">
+        <div class="card card-simple p-4 shadow-sm" style="border-left: 6px solid #e36b59;">
+            <h6 class="text-muted">Low Stock Items</h6>
+            <h2 class="fw-bold text-dark">{{ low_stock_count }}</h2>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card card-simple p-4 shadow-sm" style="border-left: 6px solid #ffb3a8;">
+            <h6 class="text-muted">Expired / Near Expiry</h6>
+            <h2 class="fw-bold text-dark">{{ expired_count }}</h2>
         </div>
     </div>
 
 </div>
+
+<hr class="my-4">
+
+<div class="row g-4">
+
+    <!-- Add Stock -->
+    <div class="col-md-6">
+        <a href="/add-product/" style="text-decoration:none;">
+            <div class="card p-4 shadow-sm text-center" style="border-radius: 14px; background: #fff5f3;">
+                <i class="bi bi-box-seam-fill" style="font-size: 40px; color:#ff7f6b;"></i>
+                <h4 class="mt-3 fw-bold" style="color:#ff7f6b;">Add Stock</h4>
+                <p class="text-muted m-0">Register new products or increase quantities</p>
+            </div>
+        </a>
+    </div>
+
+    <!-- Add Sale -->
+    <div class="col-md-6">
+        <a href="/add-sale/" style="text-decoration:none;">
+            <div class="card p-4 shadow-sm text-center" style="border-radius: 14px; background: #fff5f3;">
+                <i class="bi bi-cart-plus-fill" style="font-size: 40px; color:#e36b59;"></i>
+                <h4 class="mt-3 fw-bold" style="color:#e36b59;">Add Sale</h4>
+                <p class="text-muted m-0">Record a customer's purchase easily</p>
+            </div>
+        </a>
+    </div>
+
+</div>
+
 {% endblock %}
