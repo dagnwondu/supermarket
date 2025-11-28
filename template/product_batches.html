@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h3 class="mb-3">Stock Batches for: <strong>{{ product.name }}</strong></h3>
+
+    <a href="{% url 'add_stock' %}" class="btn btn-primary mb-3">
+        Add Stock
+    </a>
+
+    {% if batches %}
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>Quantity</th>
+                <th>Buying Price</th>
+                <th>Batch Number</th>
+                <th>Expiry Date</th>
+                <th>Added At</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for batch in batches %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ batch.quantity }}</td>
+                <td>{{ batch.buying_price }}</td>
+                <td>{{ batch.batch_number|default:"-" }}</td>
+                <td>
+                    {% if batch.expiry_date %}
+                        {{ batch.expiry_date }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>{{ batch.added_at|date:"Y-m-d H:i" }}</td>
+
+                <td>
+                    {% if batch.is_expired %}
+                        <span class="badge bg-danger">Expired</span>
+                    {% else %}
+                        <span class="badge bg-success">Valid</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% else %}
+    <div class="alert alert-warning">
+        No stock batches found for this product.
+    </div>
+    {% endif %}
+
+    <a href="{% url 'products' %}" class="btn btn-secondary mt-3">Back to Products</a>
+
+</div>
+{% endblock %}

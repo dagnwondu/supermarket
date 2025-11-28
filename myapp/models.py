@@ -1,9 +1,6 @@
 from django.db import models
 from datetime import date
 
-from django.db import models
-from datetime import date
-
 # =========================
 # CATEGORY
 # =========================
@@ -18,6 +15,7 @@ class Category(models.Model):
 # =========================
 # PRODUCT
 # =========================
+
 class Product(models.Model):
     name = models.CharField(max_length=200)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
@@ -30,8 +28,7 @@ class Product(models.Model):
 
     @property
     def total_stock(self):
-        """Total available quantity across all stock batches."""
-        return self.stock_set.aggregate(total=models.Sum('quantity'))['total'] or 0
+        return self.batches.aggregate(total=models.Sum('quantity'))['total'] or 0
 
     @property
     def low_stock(self):
@@ -43,7 +40,7 @@ class Product(models.Model):
 # STOCK (purchase / inventory)
 # =========================
 class Stock(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product,related_name="batches", on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     buying_price = models.DecimalField(max_digits=10, decimal_places=2)
     batch_number = models.CharField(max_length=100, blank=True, null=True)
