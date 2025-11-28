@@ -6,10 +6,19 @@
     <form method="POST">
         {% csrf_token %}
 
-        <div class="mb-3">
+        <!-- <div class="mb-3">
             <label>Product Name</label>
             <input type="text" class="form-control" name="name" required>
-        </div>
+        </div> -->
+<div class="mb-3">
+    <label>Product</label>
+    <input list="products" class="form-control" name="product_name" id="product_input" required>
+    <datalist id="products">
+        {% for p in products %}
+        <option value="{{ p.name }} | {{ p.category }}">
+        {% endfor %}
+    </datalist>
+</div>
 
         <div class="mb-3">
             <label>Category</label>

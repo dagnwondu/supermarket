@@ -6,6 +6,7 @@ from datetime import date, timedelta
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
+from django.http import JsonResponse
 
 from .models import Product, StockHistory, Sale, DailySummary
 from .forms import ProductForm, StockForm, SaleForm
@@ -137,3 +138,24 @@ def expired_list(request):
     expired = Product.objects.filter(expiry_date__lt=today)
     near_expiry = Product.objects.filter(expiry_date__range=[today, near_expiry_limit])
     return render(request, 'expired.html', {'expired': expired, 'near_expiry': near_expiry})
+@login_required
+def product_search(request):
+    query = request.GET.get('q', '')
+    products = Product.objects.filter(
+        name__icontains=query
+    ) | Product.objects.filter(
+        category__icontains=query
+    )
+
+    results = [
+        {
+            "id": p.id,
+            "name": p.name,
+            "category": p.category,
+            "buying_price": float(p.buying_price),
+            "selling_price": float(p.selling_price),
+            "quantity": p.quantity,
+            "expiry_date": p.expiry_date
+        } for p in products
+    ]
+    return JsonResponse(results, safe=False)

@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="card card-simple p-4">
-    <h4>Add Sale</h4>
+    <h4>Add Stock</h4>
     <form method="POST">
         {% csrf_token %}
 
@@ -13,24 +13,33 @@
         </div>
 
         <div class="mb-3">
-            <label>Available Quantity</label>
-            <input type="number" id="available_qty" class="form-control" readonly>
+            <label>Current Quantity</label>
+            <input type="number" id="current_qty" class="form-control" readonly>
         </div>
 
         <div class="mb-3">
-            <label>Price</label>
-            <input type="number" step="0.01" name="price" id="price" class="form-control" readonly>
+            <label>Quantity to Add</label>
+            <input type="number" name="quantity" class="form-control" required>
         </div>
 
         <div class="mb-3">
-            <label>Quantity to Sell</label>
-            <input type="number" name="quantity" id="quantity" class="form-control" required>
+            <label>Buying Price</label>
+            <input type="number" step="0.01" name="buying_price" id="buying_price" class="form-control" required>
         </div>
 
-        <button class="btn btn-primary"><i class="bi bi-bag-plus"></i> Add Sale</button>
+        <div class="mb-3">
+            <label>Selling Price</label>
+            <input type="number" step="0.01" name="selling_price" id="selling_price" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label>Expiry Date</label>
+            <input type="date" name="expiry_date" id="expiry_date" class="form-control">
+        </div>
+
+        <button class="btn btn-primary"><i class="bi bi-plus-circle"></i> Add Stock</button>
     </form>
 
-    <!-- Suggestions Dropdown -->
     <ul class="list-group mt-1" id="suggestions" style="position:absolute; z-index:1000;"></ul>
 
 </div>
@@ -39,8 +48,10 @@
 const input = document.getElementById('product_input');
 const suggestions = document.getElementById('suggestions');
 const productId = document.getElementById('product_id');
-const priceField = document.getElementById('price');
-const availableQty = document.getElementById('available_qty');
+const currentQty = document.getElementById('current_qty');
+const buyingPrice = document.getElementById('buying_price');
+const sellingPrice = document.getElementById('selling_price');
+const expiryDate = document.getElementById('expiry_date');
 
 input.addEventListener('input', async () => {
     const query = input.value;
@@ -60,8 +71,10 @@ input.addEventListener('input', async () => {
         li.addEventListener('click', () => {
             input.value = item.name;
             productId.value = item.id;
-            priceField.value = item.selling_price;
-            availableQty.value = item.quantity;
+            currentQty.value = item.quantity;
+            buyingPrice.value = item.buying_price;
+            sellingPrice.value = item.selling_price;
+            expiryDate.value = item.expiry_date || '';
             suggestions.innerHTML = '';
         });
         suggestions.appendChild(li);
