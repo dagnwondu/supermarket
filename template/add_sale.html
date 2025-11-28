@@ -1,106 +1,166 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="card card-simple p-4" style="max-width: 600px; margin:auto;">
+<div class="card card-simple p-4" style="max-width: 950px; margin:auto;">
     <h4 class="mb-4">Add Sale</h4>
     <form method="POST">
         {% csrf_token %}
 
-        <!-- Product Search -->
-        <div class="mb-3 position-relative">
-            <label for="product_input" class="form-label">Product</label>
-            <input type="text" id="product_input" class="form-control" placeholder="Type product name, barcode, or category" autocomplete="off" required>
-            <input type="hidden" name="product_id" id="product_id">
-            <ul class="list-group" id="suggestions" style="position:absolute; z-index:1000; width:100%;"></ul>
+        <!-- Table Header -->
+        <div class="row mb-2 fw-bold">
+            <div class="col-4">Product</div>
+            <div class="col-2">Available</div>
+            <div class="col-2">Price (Birr)</div>
+            <div class="col-1">Qty</div>
+            <div class="col-2">Total Price</div>
+            <div class="col-1">Action</div>
         </div>
 
-        <!-- Available Quantity -->
+        <!-- Sale items container -->
+        <div id="sale-items"></div>
+
+        <button type="button" id="add-item-btn" class="btn btn-secondary mb-3">+ Add Product</button>
+
+        <!-- Grand Total -->
         <div class="mb-3">
-            <label for="available_qty" class="form-label">Available Quantity</label>
-            <input type="number" id="available_qty" class="form-control" readonly>
+            <label for="grand_total" class="form-label">Grand Total (Birr)</label>
+            <input type="number" step="0.01" id="grand_total" class="form-control" readonly>
         </div>
 
-        <!-- Price per Unit -->
-        <div class="mb-3">
-            <label for="price" class="form-label">Price per Unit</label>
-            <input type="number" step="0.01" id="price" class="form-control" readonly>
-        </div>
-
-        <!-- Quantity to Sell -->
-        <div class="mb-3">
-            <label for="quantity" class="form-label">Quantity to Sell</label>
-            <input type="number" name="quantity" id="quantity" class="form-control" min="1" required>
-        </div>
-
-        <!-- Total Price -->
-        <div class="mb-3">
-            <label for="total_price" class="form-label">Total Price</label>
-            <input type="number" step="0.01" id="total_price" class="form-control" readonly>
-        </div>
-
-        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-bag-plus"></i> Add Sale</button>
+        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-bag-plus"></i> Complete Sale</button>
     </form>
 </div>
 
 <script>
-const input = document.getElementById('product_input');
-const suggestions = document.getElementById('suggestions');
-const productId = document.getElementById('product_id');
-const priceField = document.getElementById('price');
-const availableQty = document.getElementById('available_qty');
-const quantityField = document.getElementById('quantity');
-const totalPriceField = document.getElementById('total_price');
+let saleItemsContainer = document.getElementById('sale-items');
+const grandTotalField = document.getElementById('grand_total');
 
-// Update total price when quantity changes
-quantityField.addEventListener('input', () => {
-    const qty = parseInt(quantityField.value) || 0;
-    const price = parseFloat(priceField.value) || 0;
-    totalPriceField.value = (qty * price).toFixed(2);
-});
+// Function to add a new sale item row
+function addSaleItemRow(product={}) {
+    const row = document.createElement('div');
+    row.classList.add('row', 'mb-2', 'sale-item-row');
+    row.innerHTML = `
+        <div class="col-4 position-relative">
+            <input type="text" class="form-control product-name" placeholder="Product name or category" value="${product.name || ''}" required>
+            <input type="hidden" name="product_id[]" class="product-id" value="${product.id || ''}">
+            <ul class="list-group suggestions" style="position:absolute; z-index:1000; width:100%;"></ul>
+        </div>
+        <div class="col-2">
+            <input type="number" class="form-control available-qty" placeholder="Available" value="${product.quantity || 0}" readonly>
+        </div>
+        <div class="col-2">
+            <input type="number" class="form-control price" placeholder="Price" value="${product.selling_price || 0}" readonly>
+        </div>
+        <div class="col-1">
+            <input type="number" class="form-control quantity" name="quantity[]" min="1" max="${product.quantity || 1000}" value="1" required>
+        </div>
+        <div class="col-2">
+            <input type="number" class="form-control total-price" value="0" readonly>
+        </div>
+        <div class="col-1">
+            <button type="button" class="btn btn-danger btn-sm remove-item">x</button>
+        </div>
+    `;
+    saleItemsContainer.appendChild(row);
 
-input.addEventListener('input', async () => {
-    const query = input.value.trim();
-    if (!query) {
-        suggestions.innerHTML = '';
-        return;
-    }
+    const productInput = row.querySelector('.product-name');
+    const productIdInput = row.querySelector('.product-id');
+    const priceInput = row.querySelector('.price');
+    const availableInput = row.querySelector('.available-qty');
+    const quantityInput = row.querySelector('.quantity');
+    const totalPriceInput = row.querySelector('.total-price');
+    const suggestions = row.querySelector('.suggestions');
 
-    const res = await fetch("{% url 'product_search' %}?q=" + query);
-    const data = await res.json();
+    // Remove row
+    row.querySelector('.remove-item').addEventListener('click', () => {
+        row.remove();
+        updateGrandTotal();
+    });
 
-    suggestions.innerHTML = '';
-    data.forEach(item => {
-        const li = document.createElement('li');
-        li.classList.add('list-group-item', 'list-group-item-action');
-
-        li.innerHTML = `${item.name} | ${item.category} | ${item.quantity} in stock` +
-                       (item.low_stock ? ' <span class="badge bg-warning text-dark">Low Stock</span>' : '');
-
-        if (item.quantity === 0) {
-            li.classList.add('disabled');
-            li.style.opacity = 0.5;
-            li.style.pointerEvents = 'none';
+    // Live product search
+    productInput.addEventListener('input', async () => {
+        const query = productInput.value.trim();
+        if (!query) {
+            suggestions.innerHTML = '';
+            return;
         }
 
-        li.addEventListener('click', () => {
-            input.value = item.name;
-            productId.value = item.id;
-            priceField.value = item.selling_price;
-            availableQty.value = item.quantity;
-            quantityField.max = item.quantity;
-            totalPriceField.value = (item.selling_price * parseInt(quantityField.value || 1)).toFixed(2);
-            suggestions.innerHTML = '';
-        });
+        const res = await fetch("{% url 'product_search' %}?q=" + query);
+        const data = await res.json();
 
-        suggestions.appendChild(li);
-    });
-});
-
-// Hide suggestions when clicking outside
-document.addEventListener('click', (e) => {
-    if (!input.contains(e.target) && !suggestions.contains(e.target)) {
         suggestions.innerHTML = '';
-    }
-});
+        data.forEach(item => {
+            const li = document.createElement('li');
+            li.classList.add('list-group-item', 'list-group-item-action');
+            li.innerHTML = `${item.name} | ${item.category} | ${item.quantity} in stock` +
+                           (item.low_stock ? ' <span class="badge bg-warning text-dark">Low Stock</span>' : '');
+
+            if (item.quantity === 0) {
+                li.classList.add('disabled');
+                li.style.opacity = 0.5;
+                li.style.pointerEvents = 'none';
+            }
+
+            li.addEventListener('click', () => {
+                productInput.value = item.name;
+                productIdInput.value = item.id;
+                priceInput.value = item.selling_price;
+                availableInput.value = item.quantity;
+                quantityInput.max = item.quantity;
+                if (parseInt(quantityInput.value) > item.quantity) quantityInput.value = item.quantity;
+                updateRowTotal(quantityInput, priceInput);
+                updateGrandTotal();
+                suggestions.innerHTML = '';
+            });
+
+            suggestions.appendChild(li);
+        });
+    });
+
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!productInput.contains(e.target) && !suggestions.contains(e.target)) {
+            suggestions.innerHTML = '';
+        }
+    });
+
+    // Update total price when quantity changes
+    quantityInput.addEventListener('input', () => {
+        const maxQty = parseInt(quantityInput.max || 1000);
+        if (parseInt(quantityInput.value) > maxQty) quantityInput.value = maxQty;
+        if (parseInt(quantityInput.value) < 1) quantityInput.value = 1;
+        updateRowTotal(quantityInput, priceInput);
+        updateGrandTotal();
+    });
+}
+
+// Update total for a row
+function updateRowTotal(quantityInput, priceInput) {
+    const qty = parseInt(quantityInput.value) || 0;
+    const price = parseFloat(priceInput.value) || 0;
+    const total = qty * price;
+
+    // Update data-total and row input
+    quantityInput.setAttribute('data-total', total.toFixed(2));
+    const row = quantityInput.closest('.sale-item-row');
+    const totalPriceInput = row.querySelector('.total-price');
+    if (totalPriceInput) totalPriceInput.value = total.toFixed(2);
+}
+
+// Update grand total
+function updateGrandTotal() {
+    let total = 0;
+    document.querySelectorAll('.quantity').forEach(q => {
+        total += parseFloat(q.getAttribute('data-total') || 0);
+    });
+    grandTotalField.value = total.toFixed(2);
+}
+
+// Add initial row
+addSaleItemRow();
+
+// Add new row button
+document.getElementById('add-item-btn').addEventListener('click', () => addSaleItemRow());
+
 </script>
 {% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h4>Sale #{{ sale.id }} - {{ sale.created_at|date:"Y-m-d H:i" }}</h4>
+
+<table class="table table-bordered mt-3">
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Qty</th>
+            <th>Price (Birr)</th>
+            <th>Total (Birr)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in sale_items %}
+        <tr>
+            <td>{{ item.product.name }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.selling_price|floatformat:2 }}</td>
+            <td>{{ item.total_price|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="fw-bold mt-2">Grand Total: {{ grand_total|floatformat:2 }} Birr</div>
+{%endblock%}

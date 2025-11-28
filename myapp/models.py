@@ -1,5 +1,6 @@
 from django.db import models
 from datetime import date
+from django.db.models import Sum
 
 # =========================
 # CATEGORY
@@ -55,14 +56,14 @@ class Stock(models.Model):
 # =========================
 # SALE (optional for customer sales)
 # =========================
-class Sale(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField()
-    total_price = models.DecimalField(max_digits=10, decimal_places=2)  # selling_price * quantity
-    created_at = models.DateTimeField(auto_now_add=True)
+# class Sale(models.Model):
+#     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+#     quantity = models.PositiveIntegerField()
+#     total_price = models.DecimalField(max_digits=10, decimal_places=2)  # selling_price * quantity
+#     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"Sale: {self.product.name} x {self.quantity}"
+#     def __str__(self):
+#         return f"Sale: {self.product.name} x {self.quantity}"
 
 
 
@@ -73,3 +74,28 @@ class DailySummary(models.Model):
 
     def __str__(self):
         return f"Summary - {self.date}"
+class Sale(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    total_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)  # total for all items
+
+    def __str__(self):
+        return f"Sale #{self.id} - {self.created_at.date()}"
+
+    @property
+    def total_quantity(self):
+        return self.items.aggregate(total=Sum('quantity'))['total'] or 0
+
+
+class SaleItem(models.Model):
+    sale = models.ForeignKey(Sale, related_name="items", on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
+    selling_price = models.DecimalField(max_digits=10, decimal_places=2)  # price per unit
+    total_price = models.DecimalField(max_digits=12, decimal_places=2)  # quantity * selling_price
+
+    def __str__(self):
+        return f"{self.product.name} x {self.quantity}"
+
+    def save(self, *args, **kwargs):
+        self.total_price = self.quantity * self.selling_price
+        super().save(*args, **kwargs)

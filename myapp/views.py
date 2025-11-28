@@ -22,7 +22,7 @@ from .models import Category, Product, Stock
 def dashboard(request):
     total_products = Product.objects.count()
     today = date.today()
-    todays_sales = Sale.objects.filter(date_sold__date=today).count()
+    todays_sales = Sale.objects.filter(created_at__date=today).count()
     low_stock_count = Product.objects.filter(quantity__lte=5).count()
 
     near_expiry_limit = today + timedelta(days=7)
@@ -97,52 +97,16 @@ def add_category(request):
 #         form = StockForm()
 #     return render(request, 'add_stock.html', {'form': form})
 
-@login_required
-def add_sale(request):
-    """
-    Add sale: ensures there is enough stock, deducts product.quantity, records Sale.
-    """
-    if request.method == 'POST':
-        form = SaleForm(request.POST)
-        if form.is_valid():
-            sale = form.save(commit=False)
-            product = sale.product
-            qty = sale.quantity_sold
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from datetime import date
+from .models import Product, Sale, SaleItem, DailySummary
 
-            if qty <= 0:
-                messages.error(request, 'Quantity must be at least 1.')
-                return redirect('add_sale')
 
-            if product.quantity < qty:
-                messages.error(request, f'Not enough stock for {product.name}. Available: {product.quantity}')
-                return redirect('add_sale')
 
-            # compute pricing
-            sale.price_each = product.selling_price
-            sale.total_price = sale.price_each * qty
 
-            # deduct stock
-            product.quantity -= qty
-            product.save()
-
-            sale.save()
-
-            # optionally update daily summary (simple)
-            ds, created = DailySummary.objects.get_or_create(date=date.today())
-            ds.total_sales += sale.total_price
-            ds.total_items_sold += qty
-            ds.save()
-
-            messages.success(request, f'Sale recorded: {product.name} x{qty}')
-            return redirect('dashboard')
-    else:
-        form = SaleForm()
-    return render(request, 'add_sale.html', {'form': form})
-
-@login_required
-def sales_list(request):
-    sales = Sale.objects.select_related('product').order_by('-date_sold')[:200]
-    return render(request, 'sales.html', {'sales': sales})
 
 @login_required
 def expired_list(request):
@@ -195,16 +159,60 @@ def add_product(request):
     else:
         form = ProductForm()
     return render(request, 'add_product.html', {'form': form})
+login_required
 def add_stock(request):
+    """
+    Add new stock batch for a product.
+    Updates product selling price if changed.
+    """
     if request.method == 'POST':
-        form = StockForm(request.POST)
-        if form.is_valid():
-            stock = form.save()
-            messages.success(request, f"Stock added: {stock.quantity} units of {stock.product.name}")
+        product_id = request.POST.get('product_id')
+        quantity = request.POST.get('quantity')
+        buying_price = request.POST.get('buying_price')
+        selling_price = request.POST.get('selling_price')
+        expiry_date = request.POST.get('expiry_date') or None  # optional
+
+        # Basic validation
+        if not product_id or not quantity or not buying_price or not selling_price:
+            messages.error(request, "Please fill in all required fields.")
             return redirect('add_stock')
-    else:
-        form = StockForm()
-    return render(request, 'add_stock.html', {'form': form})
+
+        try:
+            quantity = int(quantity)
+            buying_price = float(buying_price)
+            selling_price = float(selling_price)
+        except ValueError:
+            messages.error(request, "Invalid number entered.")
+            return redirect('add_stock')
+
+        if quantity <= 0 or buying_price <= 0 or selling_price <= 0:
+            messages.error(request, "Quantity and prices must be positive.")
+            return redirect('add_stock')
+
+        # Get product
+        product = get_object_or_404(Product, id=product_id)
+
+        # Update product selling price if changed
+        if product.selling_price != selling_price:
+            product.selling_price = selling_price
+            product.save()
+        import datetime
+
+        batch_number = f"{product.id}-{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
+
+        # Create stock batch
+        stock = Stock.objects.create(
+            product=product,
+            quantity=quantity,
+            buying_price=buying_price,
+            batch_number=batch_number,  # optional: can auto-generate
+            expiry_date=expiry_date
+        )
+
+        messages.success(request, f"Stock added: {stock.quantity} units of {product.name}")
+        return redirect('add_stock')
+    return render(request, 'add_stock.html')
+
 def edit_product(request, product_id):
     product = get_object_or_404(Product, id=product_id)
 
@@ -225,84 +233,150 @@ def product_batches(request, product_id):
         'product': product,
         'batches': batches
     })
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from datetime import date
+from .models import Product, Sale, SaleItem, DailySummary
+
+@login_required
+def add_sale(request):
+    """
+    Multi-item sale:
+    - Validate stock for each product
+    - Deduct stock using FIFO
+    - Create Sale and SaleItem entries
+    - Update daily summary
+    """
+    if request.method == 'POST':
+        product_ids = request.POST.getlist('product_id[]')
+        quantities = request.POST.getlist('quantity[]')
+
+        if not product_ids or not quantities:
+            messages.error(request, "No products selected.")
+            return redirect('add_sale')
+
+        # Convert quantities to integers
+        try:
+            quantities = [int(q) for q in quantities]
+        except (ValueError, TypeError):
+            messages.error(request, "Invalid quantity entered.")
+            return redirect('add_sale')
+
+        # Validate stock for all selected products
+        products = Product.objects.filter(id__in=product_ids)
+        product_map = {str(p.id): p for p in products}
+        stock_errors = []
+
+        for pid, qty in zip(product_ids, quantities):
+            product = product_map.get(pid)
+            if not product:
+                stock_errors.append(f"Product with ID {pid} not found.")
+            elif qty <= 0:
+                stock_errors.append(f"Quantity for {product.name} must be at least 1.")
+            elif product.total_stock < qty:
+                stock_errors.append(f"Not enough stock for {product.name}. Available: {product.total_stock}")
+
+        if stock_errors:
+            messages.error(request, " | ".join(stock_errors))
+            return redirect('add_sale')
+
+        # All validations passed, save sale
+        with transaction.atomic():
+            sale = Sale.objects.create(total_price=0)
+            grand_total = 0
+
+            for pid, qty in zip(product_ids, quantities):
+                product = product_map[pid]
+
+                # Deduct stock using FIFO
+                remaining = qty
+                batches = product.batches.filter(quantity__gt=0).order_by('added_at')
+                for batch in batches:
+                    if remaining == 0:
+                        break
+                    if batch.quantity >= remaining:
+                        batch.quantity -= remaining
+                        batch.save()
+                        remaining = 0
+                    else:
+                        remaining -= batch.quantity
+                        batch.quantity = 0
+                        batch.save()
+
+                # Compute item total
+                total_price = qty * product.selling_price
+                grand_total += total_price
+
+                # Create SaleItem
+                SaleItem.objects.create(
+                    sale=sale,
+                    product=product,
+                    quantity=qty,
+                    selling_price=product.selling_price,
+                    total_price=total_price
+                )
+
+            # Update Sale grand total
+            sale.total_price = grand_total
+            sale.save()
+
+            # Update daily summary
+            ds, created = DailySummary.objects.get_or_create(date=date.today())
+            ds.total_sales += grand_total
+            ds.total_items_sold += sum(quantities)
+            ds.save()
+
+            messages.success(request, f"Sale recorded successfully! Grand Total: {grand_total:.2f} Birr")
+            return redirect('dashboard')
+
+    return render(request, 'add_sale.html')
+from django.shortcuts import render
+from django.core.paginator import Paginator
+from django.db.models import Q, Sum
+from .models import Sale, SaleItem, Product, Category
+
 def sales(request):
+    # Filters
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
 
-    sales = Sale.objects.select_related("product").order_by("-created_at")
-
-    # --- Filters ---
-    search = request.GET.get("search")
-    product_id = request.GET.get("product")
-    category_id = request.GET.get("category")
-    date_from = request.GET.get("date_from")
-    date_to = request.GET.get("date_to")
-    price_min = request.GET.get("price_min")
-    price_max = request.GET.get("price_max")
-
-    if search:
-        sales = sales.filter(product__name__icontains=search)
-
-    if product_id:
-        sales = sales.filter(product_id=product_id)
-
-    if category_id:
-        sales = sales.filter(product__category_id=category_id)
+    sales = Sale.objects.all().order_by('-created_at')
 
     if date_from:
         sales = sales.filter(created_at__date__gte=date_from)
-
     if date_to:
         sales = sales.filter(created_at__date__lte=date_to)
 
-    if price_min:
-        sales = sales.filter(total_price__gte=price_min)
+    # Compute total for display if needed
+    for sale in sales:
+        sale.total_items = sale.items.aggregate(total_qty=Sum('quantity'))['total_qty'] or 0
+        sale.total_price = sale.items.aggregate(total_price=Sum('total_price'))['total_price'] or 0
 
-    if price_max:
-        sales = sales.filter(total_price__lte=price_max)
+    # Pagination
+    paginator = Paginator(sales, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
-    return render(request, "sales.html", {
-        "sales": sales,
-        "products": Product.objects.all(),
-        "categories": Category.objects.all(),
-        "values": request.GET
-    })
+    context = {
+        'sales': page_obj,
+        'page_obj': page_obj,
+        'values': request.GET,
+    }
+    return render(request, 'sales.html', context)
 
-def add_sale(request):
-    if request.method == "POST":
-        product_id = request.POST.get("product_id")
-        quantity = int(request.POST.get("quantity"))
+def sale_detail(request, sale_id):
+    sale = get_object_or_404(Sale, id=sale_id)
+    sale_items = sale.items.select_related('product')
 
-        product = get_object_or_404(Product, id=product_id)
-        # total_available = product.stock_set.aggregate(total=Sum('quantity'))['total'] or 0
-        total_available = product.batches.aggregate(total=Sum('quantity'))['total'] or 0
+    grand_total = sale_items.aggregate(total=Sum('total_price'))['total'] or 0
 
-        if quantity > total_available:
-            messages.error(request, "Quantity exceeds available stock!")
-            return redirect('add_sale')
-
-        # Deduct stock using FIFO
-        remaining = quantity
-        batches = Stock.objects.filter(product=product, quantity__gt=0).order_by('added_at')
-
-        with transaction.atomic():
-            for batch in batches:
-                if remaining == 0:
-                    break
-                if batch.quantity >= remaining:
-                    batch.quantity -= remaining
-                    batch.save()
-                    remaining = 0
-                else:
-                    remaining -= batch.quantity
-                    batch.quantity = 0
-                    batch.save()
-
-            Sale.objects.create(
-                product=product,
-                quantity=quantity,
-                total_price=product.selling_price * quantity
-            )
-
-        messages.success(request, "Sale recorded successfully!")
-        return redirect('add_sale')
-
-    return render(request, "add_sale.html")
+    context = {
+        'sale': sale,
+        'sale_items': sale_items,
+        'grand_total': grand_total,
+    }
+    return render(request, 'sale_detail.html', context)

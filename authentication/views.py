@@ -12,8 +12,14 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from . models import CustomUser, Company
 from django.shortcuts import render,redirect, reverse
 from django.core.paginator import Paginator
-from myapp.models import Product, Sale
+from myapp.models import Product, Sale, SaleItem
 from . forms import UserForm, UserUpdateForm
+
+from django.db.models import Sum
+from django.utils.timezone import now
+from django.shortcuts import render
+
+
 # Create your views here.
 # Identify users role and redirect to their view
 def home(request):
@@ -64,20 +70,23 @@ today = now().date()
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_cashier)
 def cashier_view(request):
-    today_sales = Sale.objects.filter(created_at__date=today).aggregate(
+    today = now().date()
+
+    # Aggregate total quantity and total revenue from SaleItem
+    today_sales = SaleItem.objects.filter(sale__created_at__date=today).aggregate(
         total_quantity=Sum('quantity'),
         total_revenue=Sum('total_price')
     )
 
-    products = Product.objects.all().count()
-    context={
-    'products':products,
-    'today_sales': today_sales['total_revenue'] or 0,
+    products_count = Product.objects.all().count()
 
+    context = {
+        'products': products_count,
+        'today_total_quantity': today_sales['total_quantity'] or 0,
+        'today_sales_birr': today_sales['total_revenue'] or 0,
     }
 
-
-    return render(request, 'cashier_page.html', context)   
+    return render(request, 'cashier_page.html', context)
 
 
 
