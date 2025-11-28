@@ -1,0 +1,31 @@
+{% extends 'lab_technologist_page/lab_base.html' %}
+<!--  -->
+{% block content %}
+<!--  -->
+Result detail
+<div class="container">
+  <h5 style="text-align: center">{{company_name}}</h5>
+  <h5 style="text-align: center">Laboratory Result</h5>
+
+  <label for="name"> Name: {{ patient.full_name }}</label><br />
+  <label for="name"> MRN: {{ patient.card_number }}</label>:
+
+  <div class="table-responsive">
+    <table class="table">
+      <tr>
+        <th>Parameter/Modules</th>
+        <th>Result</th>
+        <th>Unit</th>
+      </tr>
+      {% for results in investigation_result_detail %}
+      <tr>
+        <td>{{ results.parameter }}</td>
+        <td>{{ results.value }}</td>
+        <td>{{ results.parameter.unit }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+
+{% endblock %}

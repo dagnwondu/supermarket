@@ -1,0 +1,123 @@
+{% extends 'receptionist_page/receptionist_base.html' %}
+{% block content %}
+<h6>Welcome: {{ request.user.first_name }}</h6>
+
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold text-primary">🏥 Inpatient Management (Reception)</h4>
+  </div>
+
+<!-- Search & Filter Form -->
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-4">
+    <input
+      type="text"
+      name="q"
+      value="{{ request.GET.q }}"
+      class="form-control"
+      placeholder="Search patient by name or card number"
+    />
+  </div>
+
+  <div class="col-md-4">
+    <select name="ward" class="form-select">
+      <option value="">All Wards</option>
+      {% for ward in wards %}
+        <option value="{{ ward.id }}" {% if request.GET.ward == ward.id|stringformat:"s" %}selected{% endif %}>
+          {{ ward.name }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="col-md-2">
+    <button class="btn btn-primary w-100">
+      <i class="bi bi-search"></i> Filter
+    </button>
+  </div>
+
+  <div class="col-md-2">
+    <a href="{% url 'inpatient_management' %}" class="btn btn-secondary w-100">
+      <i class="bi bi-arrow-repeat"></i> Reset
+    </a>
+  </div>
+</form>
+
+
+  <!-- Admissions Table -->
+  <div class="card shadow-sm rounded-3">
+    <div class="card-body p-0">
+      {% if admissions %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-primary">
+            <tr>
+              <th>#</th>
+              <th>Card No.</th>
+              <th>Full Name</th>
+              <th>Gender</th>
+              <th>Ward</th>
+              <th>Bed</th>
+              <th>Doctor</th>
+              <th>Admission Date</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in admissions %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td><strong>{{ a.patient.card_number }}</strong></td>
+              <td>{{ a.patient.full_name }}</td>
+              <td>{{ a.patient.get_gender_display }}</td>
+              <td>{{ a.ward.name }}</td>
+              <td>{% if a.bed %}{{ a.bed.bed_number }}{% else %}-{% endif %}</td>
+              <td>
+                {% if a.attending_doctor %}
+                  {{ a.attending_doctor.get_full_name }}
+                {% else %}
+                  <span class="text-muted">Unassigned</span>
+                {% endif %}
+              </td>
+              <td>{{ a.admission_date|date:"M d, Y H:i" }}</td>
+              <td>
+                {% if a.status == 'Admitted' %}
+                  <span class="badge bg-success">Admitted</span>
+                {% elif a.status == 'Transferred' %}
+                  <span class="badge bg-info">Transferred</span>
+                {% elif a.status == 'Discharged' %}
+                  <span class="badge bg-secondary">Discharged</span>
+                {% elif a.status == 'Deceased' %}
+                  <span class="badge bg-danger">Deceased</span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="btn-group">
+                  <a href="{% url 'admission_detail' a.id %}" class="btn btn-info btn-sm" title="View details">
+                    <i class="bi bi-eye">View Details</i>
+                  </a>
+                  {% if a.status == 'Admitted' %}
+                    <a href="{% url 'discharge_patient' a.id %}"
+                class="btn btn-outline-danger btn-sm">
+                Discharge Patient
+              </a>
+               
+                {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center text-muted py-5">
+        <i class="bi bi-people display-4 d-block mb-3"></i>
+        <p>No admissions found.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

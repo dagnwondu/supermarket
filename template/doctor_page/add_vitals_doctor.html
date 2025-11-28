@@ -1,0 +1,14 @@
+{% extends 'doctor_page/doctor_base.html' %} {% block content %}
+<h6>Welcome: {{ user.first_name }}</h6>
+
+<!-- table For Recent Patients Table -->
+<div class="container">
+<h4 style="text-align: center">Add Vitals for {{ patient.full_name }}</h4> 
+ <div class="">
+<form method="post">
+  {% csrf_token %} 
+  {{ form.as_p }}
+  <button type="submit" class="btn btn-success">Save Vitals</button>
+</form>
+</div>
+{% endblock %}

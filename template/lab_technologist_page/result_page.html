@@ -1,0 +1,19 @@
+{% extends 'lab_page/lab_base.html' %} {% block content %}
+
+<h1>Insert Medical Result for {{ patient.full_name }}</h1>
+
+<form method="post">
+  {% csrf_token %} {{ form.as_p }}
+  <button type="submit">Save Result</button>
+</form>
+
+{% if form.errors %}
+<div class="errors">
+  <p>Please correct the errors below:</p>
+  <ul>
+    {% for field in form %} {% for error in field.errors %}
+    <li>{{ error }}</li>
+    {% endfor %} {% endfor %}
+  </ul>
+</div>
+{% endif %} {% endblock %}

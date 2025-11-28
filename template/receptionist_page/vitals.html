@@ -1,0 +1,56 @@
+{% extends 'receptionist_page/receptionist_base.html' %} {% block content %}
+<h6>Welcome: {{ user.first_name }}</h6>
+{% if page_obj %}
+<!-- table For Vitals Table -->
+<div class="container">
+<h4 style="text-align: center">
+Vitals for {{ patient.full_name }}
+</h4> 
+ <div class="col">
+    <div class="table-responsive">
+      <table class="table table-hover table-bordered">
+        <thead>
+          <tr>
+          <th scope="col">S.No</th>
+          <th scope="col">T&nbsp;°C</th>
+          <th scope="col">Weight (KG)</th>
+          <th scope="col">BP</th>
+          <th scope="col">Heart Rate</th>
+          <th scope="col">Respiratory Rate</th>
+          <th scope="col">Blood Glucose</th>
+          <th scope="col">O₂ Saturation (With O₂)</th>
+          <th scope="col">O₂ Saturation (Without O₂)</th>
+          <th scope="col">Recorded Time</th>
+          <th scope="col">Recorded By</th>
+          <th scope="col">Action</th>
+        </tr>
+        </thead>
+        <tbody>
+          {% for vital in page_obj %}
+          <tr>
+            <td>{{ start_index|add:forloop.counter }}</td>
+            <td>{{ vital.temperature }}</td>
+            <td>{{ vital.weight }}</td>
+            <td>{{ vital.blood_pressure }}</td>
+            <td>{{ vital.heart_rate }}</td>
+            <td>{{ vital.respiratory_rate }}</td>
+            <td>{{ vital.blood_glucose }}</td>
+            <td>{{ vital.oxygen_saturation_with_oxygen }}</td>
+            <td>{{ vital.oxygen_saturation_no_oxygen }}</td>
+            <td>{{ vital.recorded_at }}</td>
+            <td>{{ vital.recorded_by }}</td>
+            <td>
+              <a href="{% url 'add_vitals' patient.id %}" class="btn btn-success btn-sm">Add Vitals</a>
+            </td>           
+          </tr>
+          {%endfor%}
+        </tbody>
+      </table>
+
+    </div>
+  {%else%}
+  <h4 style="text-align: center">No Vitals recorded for {{patient.full_name}} yet     <a href="{% url 'add_vitals' patient.id %}" class="btn btn-success btn-sm">Add New Vitals</a>
+
+</h4> 
+  {%endif%}
+{% endblock %}

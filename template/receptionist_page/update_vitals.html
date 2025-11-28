@@ -1,0 +1,14 @@
+{% block content %}
+<div class="container">
+  <h2>Update Vitals for {{ vitals.medical_record.patient.full_name }}</h2>
+  <form method="post">
+    {% csrf_token %} {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Update</button>
+    <a
+      href="{% url 'patient_detail' vitals.medical_record.patient.id %}"
+      class="btn btn-secondary"
+      >Cancel</a
+    >
+  </form>
+</div>
+{% endblock %}

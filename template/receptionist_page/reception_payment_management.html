@@ -1,0 +1,135 @@
+{% extends 'receptionist_page/receptionist_base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <h4 class="text-center mb-4">Payment Report</h4>
+
+    <!-- FILTER FORM -->
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-3">
+            <label for="start_date" class="form-label">Start Date</label>
+            <input type="date" id="start_date" name="start_date" class="form-control" value="{{ request.GET.start_date }}">
+        </div>
+        <div class="col-md-3">
+            <label for="end_date" class="form-label">End Date</label>
+            <input type="date" id="end_date" name="end_date" class="form-control" value="{{ request.GET.end_date }}">
+        </div>
+        <div class="col-md-2">
+            <label for="service_type" class="form-label">Service Type</label>
+            <select id="service_type" name="service_type" class="form-select">
+                <option value="">All</option>
+                {% for service in services %}
+                <option value="{{ service.name }}" {% if request.GET.service_type == service.name %}selected{% endif %}>
+                    {{ service.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label for="client_type" class="form-label">Client Type</label>
+            <select id="client_type" name="client_type" class="form-select">
+                <option value="">All</option>
+                <option value="Regular" {% if request.GET.client_type == "Regular" %}selected{% endif %}>Regular</option>
+                <option value="Walk-in" {% if request.GET.client_type == "Walk-in" %}selected{% endif %}>Walk-in</option>
+            </select>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">Filter</button>
+        </div>
+    </form>
+
+    <!-- TOTAL PAYMENTS -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <span><strong>Total Payments:</strong> {{ total_payment_amount|floatformat:2 }} Birr</span>
+    </div>
+
+    <!-- PAYMENT TABLE -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Client Name</th>
+                    <th>Service Type</th>
+                    <th>Amount (Birr)</th>
+                    <th>Status</th>
+                    <th>Payment Date</th>
+                    <th>Client Type</th>
+                    <th>Created By</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for object in page_obj %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ object.get_patient_display }}</td>
+                    <td>{{ object.service_type }}</td>
+                    <td>{{ object.amount|floatformat:2 }}</td>
+                    <td>
+                        {% if object.status == "Completed" %}
+                            <span class="badge bg-success">{{ object.status }}</span>
+                        {% elif object.status == "Pending" %}
+                            <span class="badge bg-warning text-dark">{{ object.status }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ object.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ object.created_at|date:"Y-m-d H:i" }}</td>
+                    <td>{{ object.client_type }}</td>
+                    <td>{{ object.created_by }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center">No payments found for this filter.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="table-light">
+                <tr>
+                    <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                    <td><strong> {{total_payment_amount|floatformat:2 }}</strong></td>
+                    <td colspan="4"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+<div class="pagination-container text-center mt-3">
+  <nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center">
+      {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}{% endif %}{% if request.GET.end_date %}&end_date={{ request.GET.end_date }}{% endif %}{% if request.GET.service_type %}&service_type={{ request.GET.service_type }}{% endif %}{% if request.GET.client_type %}&client_type={{ request.GET.client_type }}{% endif %}">
+          Previous
+        </a>
+      </li>
+      {% endif %}
+
+      <li class="page-item disabled">
+        <span class="page-link">
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </span>
+      </li>
+
+      {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}{% endif %}{% if request.GET.end_date %}&end_date={{ request.GET.end_date }}{% endif %}{% if request.GET.service_type %}&service_type={{ request.GET.service_type }}{% endif %}{% if request.GET.client_type %}&client_type={{ request.GET.client_type }}{% endif %}">
+          Next
+        </a>
+      </li>
+      {% endif %}
+    </ul>
+  </nav>
+</div>
+
+{% endblock %}

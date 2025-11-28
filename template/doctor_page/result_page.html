@@ -1,0 +1,46 @@
+{% extends 'lab_page/lab_base.html' %} {% block content %}
+<div class="container-fluid">
+  <h6>Welcome, {{ request.user }}</h6>
+  <h3 class="mt-4 text-center">Insert Lab Test Results</h3>
+
+  <div class="container">
+    <div class="col">
+      <form method="POST" action="{% url 'save_result' patient.id %}">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label for="result">Test Result</label>
+          <textarea
+            class="form-control"
+            id="result"
+            name="result"
+            rows="5"
+            placeholder="Enter the test result here..."
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="test_date">Test Date</label>
+          <input
+            type="date"
+            class="form-control"
+            id="test_date"
+            name="test_date"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="result_status">Result Status</label>
+          <select class="form-control" id="result_status" name="result_status">
+            <option value="Pending">Pending</option>
+            <option value="Completed">Completed</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-3">Save Result</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends 'reception_page/reception_base.html' %} {% block content %}
+<!--  -->
+{% if messages %}
+<!--  -->
+<div class="alert alert-info">
+  {% for message in messages %}
+  <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+<!--  -->
+{% if payments %}
+<h5 style="text-align: center">Payments</h5>
+<div class="container-fluid">
+  <div class="col">
+    <table class="table table-striped table-hover table-bordered">
+      <thead>
+        <tr>
+          <th scope="col">S.No</th>
+          <th scope="col">Full Name</th>
+          <th>Total Amount</th>
+          <th>Action</th>
+          <!-- Added Action column -->
+        </tr>
+      </thead>
+      <tbody>
+        {% for patient in payments %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ patient.patient__full_name }}</td>
+          <td>{{ patient.total_amount|floatformat:2 }}</td>
+          <!-- Format amount -->
+          <td>
+            <a
+              href="{% url 'payment_details' patient.patient_id %}"
+              class="btn btn-success"
+            >
+              View Payment Details
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="container">
+  <p>No Pending payments found.</p>
+</div>
+{% endif %} {% endblock %}

@@ -1,0 +1,108 @@
+{% extends 'radiologist_page/radiologist_base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="container">
+    <!-- Header with logos and clinic name -->
+    <div class="header">
+        <img src="{% static 'left-logo.png' %}" alt="Logo">
+        <h2>DR. BROOK MEDUM CLINIC</h2>
+        <img src="{% static 'left-logo.png' %}" alt="Logo">
+    </div>
+
+    <!-- Patient Information Table -->
+    <table>
+        <tr>
+            <th>Patient Name</th>
+            <td>{{ patient.full_name }}</td>
+            <th>Age</th>
+            <td>{{ patient.age }}</td>
+        </tr>
+        <tr>
+            <th>Sex</th>
+            <td>{{ patient.gender }}</td>
+            <th>MRN</th>
+            <td>{{ patient.card_number }}</td>
+        </tr>
+        <tr>
+            <td colspan="4" class="test-type">Type of Test: {{ service_name }}</td>
+        </tr>
+    </table>
+
+    {% if imaging_result %}
+    <!-- Display existing result -->
+    <div class="form-group" style="margin-top: 30px;">
+        <label><strong>Imaging Test Result:</strong></label>
+        <div style="border: 1px solid #ccc; padding: 15px; background: #f9f9f9; min-height: 150px; font-size: 16px;">
+            {{ imaging_result }}
+        </div>
+    </div>
+{% else %}
+    <!-- Display form to submit new result -->
+    <form method="post" action="{% url 'submit_imaging_result' patient.id service_name %}">
+        {% csrf_token %}
+        <div class="form-group" style="margin-top: 30px;">
+            <label for="imaging_result"><strong>Imaging Test Result:</strong></label><br>
+            <textarea id="imaging_result" name="imaging_result" rows="10" cols="100" style="width: 100%; padding: 10px; font-size: 16px;" placeholder="Write your imaging interpretation here..."></textarea>
+            <textarea name="conclusion" placeholder="Conclusion" required></textarea>
+        </div>
+        <button type="submit" style="margin-top: 15px; padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px;">Submit Result</button>
+    </form>
+{% endif %}
+
+</div>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+    }
+
+    .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 30px;
+    }
+
+    .header img {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+    }
+
+    .header h2 {
+        flex-grow: 1;
+        text-align: center;
+        margin: 0;
+        font-size: 24px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+
+    th, td {
+        border: 1px solid #444;
+        padding: 10px;
+        font-size: 16px;
+    }
+
+    th {
+        background-color: #f0f0f0;
+    }
+
+    .test-type {
+        text-align: left;
+        padding-top: 20px;
+        font-weight: bold;
+    }
+
+    .form-group {
+        margin-top: 30px;
+    }
+</style>
+
+{% endblock %}

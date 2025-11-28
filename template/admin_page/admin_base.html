@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+{% load static %}
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{company_name}}</title>
+
+    <link
+      rel="stylesheet"
+      href="{% static 'bootstrap/css/bootstrap.min.css' %}"
+    />
+
+    <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+
+    <style>
+      body,
+      html {
+        height: 100%;
+        margin: 0;
+      }
+      #wrapper {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+      #sidebar-wrapper {
+        height: 100vh;
+        width: 250px;
+        background-color: #343a40;
+        color: white;
+        transition: all 0.3s;
+        z-index: 1000;
+        position: fixed;
+        left: -250px; /* Initially hidden */
+      }
+      #wrapper.toggled #sidebar-wrapper {
+        left: 0; /* Show sidebar when toggled */
+      }
+      #page-content-wrapper {
+        flex-grow: 1;
+        padding: 20px;
+        margin-left: 0;
+        transition: margin-left 0.3s;
+      }
+      #wrapper.toggled #page-content-wrapper {
+        margin-left: 250px; /* Push content to the right */
+      }
+      .list-group-item {
+        border: none;
+      }
+      .list-group-item:hover {
+        background-color: #575549;
+      }
+      .sidebar-heading {
+        background-color: #212529;
+        font-size: 1.25rem;
+        padding: 1rem;
+        text-align: center;
+      }
+      .hamburger {
+        cursor: pointer;
+        border: none;
+        background: none;
+        padding: 0;
+        outline: none;
+      }
+      .hamburger .line {
+        width: 30px;
+        height: 3px;
+        background-color: #000;
+        margin: 5px 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="wrapper">
+      <div class="bg-dark" id="sidebar-wrapper">
+        <div class="sidebar-heading">{{company_name}}</div>
+        <div class="list-group list-group-flush">
+          <a
+            href="/admin_view/"
+            class="list-group-item list-group-item-action bg-dark text-white"
+            >Dashboard</a
+          >
+          <!-- Dropdown 1  -->
+          <!-- Dropdown 1  -->
+          <!-- Dropdown 1  -->
+          <a
+            class="list-group-item list-group-item-action bg-dark text-white dropdown-toggle"
+            data-bs-toggle="collapse"
+            href="#manageUsersDropdown"
+            role="button"
+            aria-expanded="false"
+            aria-controls="manageUsersDropdown"
+          >
+            Users Management
+          </a>
+          <div class="collapse" id="manageUsersDropdown">
+            <a
+              href="{% url 'users_management' %}"
+              class="list-group-item list-group-item-action bg-dark text-white ps-4"
+              >Manage Users</a
+            >
+          </div>
+
+          <!-- Dropdown 2 -->
+          <a
+            class="list-group-item list-group-item-action bg-dark text-white dropdown-toggle"
+            data-bs-toggle="collapse"
+            href="#manageReportsDropdown"
+            role="button"
+            aria-expanded="false"
+            aria-controls="manageReportsDropdown"
+          >
+            Reports Management
+          </a>
+          <div class="collapse" id="manageReportsDropdown">
+            <a
+              href="{% url 'payment_reports' %}"
+              class="list-group-item list-group-item-action bg-dark text-white ps-4"
+              >Payment Reports</a
+            >
+          </div>
+          <!-- Dropdown 2 -->
+          <a
+            class="list-group-item list-group-item-action bg-dark text-white dropdown-toggle"
+            data-bs-toggle="collapse"
+            href="#manageServicesDropdown"
+            role="button"
+            aria-expanded="false"
+            aria-controls="manageServicesDropdown"
+          >
+            Service Management
+          </a>
+          <div class="collapse" id="manageServicesDropdown">
+            <a
+              href="{% url 'services_management'%}"
+              class="list-group-item list-group-item-action bg-dark text-white ps-4"
+              >Service Management</a
+            >
+            <a
+              href="{% url 'parameters_management'%}"
+              class="list-group-item list-group-item-action bg-dark text-white ps-4"
+              >Parameters Management</a
+            >
+          </div>
+        </div>
+      </div>
+      <!-- /#sidebar-wrapper -->
+
+      <!-- Page Content -->
+      <div id="page-content-wrapper">
+        <nav
+          class="navbar navbar-expand-lg navbar-light bg-light border-bottom"
+        >
+          <!-- Sidebar Toggle Button -->
+          <button class="hamburger me-3" id="menu-toggle">
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+          </button>
+
+          <!-- Brand or Title -->
+          <a class="navbar-brand" href="/admin_view/">{{company_name}} </a>
+
+          <!-- Navbar Collapse Toggle Button (for small screens) -->
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarNav"
+            aria-controls="navbarNav"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+
+          <!-- Collapsible Navbar Links -->
+          <!-- Collapsible Navbar Links -->
+          <!-- Collapsible Navbar Links -->
+          <!-- Collapsible Navbar Links -->
+          <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+              <li class="nav-item">
+                <a class="nav-link" href="/admin_view/">Home</a>
+              </li>
+              <li class="nav-item"><a class="nav-link" href="#">Profile</a></li>
+
+              <li class="nav-item">
+                <form
+                  action="{% url 'logout' %}"
+                  method="post"
+                  style="display: inline"
+                >
+                  {% csrf_token %}
+                  <button type="submit" class="nav-link btn btn-link">
+                    Logout
+                  </button>
+                </form>
+              </li>
+            </ul>
+          </div>
+        </nav>
+
+        <div class="container-fluid">
+          <div class="row">
+            <!-- Main Content Area -->
+            <div>{% block content %} {% endblock %}</div>
+          </div>
+        </div>
+      </div>
+      <!-- /#page-content-wrapper -->
+    </div>
+
+    <script>
+      document
+        .getElementById("menu-toggle")
+        .addEventListener("click", function () {
+          document.getElementById("wrapper").classList.toggle("toggled");
+        });
+    </script>
+  </body>
+</html>

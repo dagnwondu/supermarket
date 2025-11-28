@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DR. BROOK MEDIUM CLINIC</title>
+    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
+
+    <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+
+   
+    <style>
+      body,
+      html {
+        height: 100%;
+        margin: 0;
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        background-color: #f4f4f4;
+      }
+
+      .list-group-item {
+        border: none;
+      }
+
+      .list-group-item:hover {
+        background-color: #575549;
+      }
+
+      .hamburger {
+        cursor: pointer;
+        border: none;
+        background: none;
+        padding: 0;
+        outline: none;
+      }
+
+      .hamburger .line {
+        width: 30px;
+        height: 3px;
+        background-color: #000;
+        margin: 5px 0;
+      }
+
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 30px;
+        width: 100%;
+      }
+      .clinic-title h1 {
+        margin: 0;
+        font-size: 36px;
+        font-family: "Chalkduster", "fantasy"; /* Wide font */
+        letter-spacing: 2px; /* Increase space for more stretching */
+        text-transform: uppercase;
+        font-weight: bold;
+      }
+
+      .clinic-title {
+        flex: 1;
+        text-align: center;
+      }
+
+      .header img {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+      }
+
+      .header h2 {
+        flex-grow: 1;
+        text-align: center;
+        margin: 0;
+        font-size: 24px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 0px;
+      }
+
+      th,
+      td {
+        border: 1px solid #444;
+        padding: 0px;
+        font-size: 16px;
+      }
+
+      th {
+        background-color: #f0f0f0;
+      }
+
+      .test-type {
+        text-align: left;
+        padding-top: 0px;
+        font-weight: bold;
+      }
+
+      .form-group {
+        margin-top: 30px;
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 40px;
+        font-size: 14px;
+        color: #555;
+        font-family: "Times New Roman", Times, serif;
+        padding: 1px;
+        margin: 0px;
+      }
+
+      .footer h5 {
+        word-spacing: normal;
+      }
+
+      .print-btn,
+      .edit-btn {
+        margin-top: 15px;
+        padding: 10px 20px;
+        border-radius: 5px;
+        text-decoration: none;
+        color: white;
+        display: inline-block;
+      }
+
+      .print-btn {
+        background-color: #28a745;
+      }
+
+      .edit-btn {
+        background-color: #ffc107;
+      }
+
+      @media print {
+        #editableResult[contenteditable="true"] {
+        border: none !important;
+        outline: none !important;
+        background: none !important;
+        pointer-events: none;
+    }
+        body {
+          width: 210mm;
+          height: 297mm;
+          padding: 20mm;
+          margin: 0;
+        }
+
+        .container {
+          width: 100%;
+          margin: 0;
+          padding: 0;
+        }
+
+        table {
+          width: 100%;
+          border: 1px solid #444;
+          border-collapse: collapse;
+        }
+
+        th,
+        td {
+          padding: 8px;
+          font-size: 12px;
+        }
+
+        .footer {
+          font-size: 12px;
+          position: fixed;
+          bottom: 20mm;
+          left: 0;
+          right: 0;
+        }
+
+        .header img {
+          width: 60px;
+          height: 60px;
+        }
+
+        .header h2 {
+          font-size: 20px;
+        }
+
+        .form-group {
+          margin-top: 10px;
+        }
+
+        .print-btn {
+          display: none !important;
+        }
+      }
+    </style>
+  </head>
+
+  {% load static %}
+
+  <body>
+    <div class="container">
+      <!-- Header with logos and clinic name -->
+      <div class="header">
+        <div class="logo-side">
+          <img src="{% static 'left-logo.png' %}" alt="Logo" />
+        </div>
+        <div class="clinic-title">
+          <h1>DR. BROOK MEDIUM CLINIC</h1>
+        </div>
+        <div class="logo-side">
+          <img src="{% static 'left-logo.png' %}" alt="Logo" />
+        </div>
+      </div>
+
+      <!-- Patient Information Table -->
+      <table>
+        <tr>
+          <th>Name</th>
+          <td>{{ patient.full_name }}</td>
+          <th>Age</th>
+          <td>{{ patient.age }}</td>
+          <th>Sex</th>
+          <td>{{ patient.gender }}</td>
+          <th>MRN</th>
+        </tr>
+        <th class="col-3" style="padding: 0px">Indication</th>
+
+        <tr>
+          <td colspan="4" class="test-type">
+            Type of Examination: {{ service_name }}
+          </td>
+        </tr>
+      </table>
+
+      {% if imaging_result %}
+      <!-- Display existing result -->
+      <div class="form-group" style="margin-top: 30px">
+        <div
+        contenteditable="false"
+        id="editableResult"
+
+          style="
+            border: 1px solid #ccc;
+            padding: 15px;
+            background: #f9f9f9;
+            min-height: 150px;
+            font-size: 16px;
+          "
+        >
+          {{ imaging_result.result }}
+        </div>
+        <div
+          style="
+            border: 1px solid #ccc;
+            padding: 15px;
+            background: #f9f9f9;
+            min-height: 150px;
+            font-size: 16px;
+          "
+        >
+          <b>Conclusion:</b> {{ imaging_result.conclusion }}
+        </div>
+        <button onclick="window.print();" class="print-btn">
+          Print Result
+        </button>
+      </div>
+      {% else %}
+      <!-- Display form to submit new result -->
+      <h3>No result to display!</h3>
+      {% endif %}
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <h5><u>ADDRESS:</u> FERENJ ARADA NEXT TO WALIA HOTEL, JIMMA, ETHIOPIA</h5>
+      <h5><u>Telephone:</u> 251-9-17-16-14-05 or +251-9-32-44-88-59</h5>
+      <h5>ጤናን ለህሊና!</h5>
+    </div>
+  </body>
+</html>

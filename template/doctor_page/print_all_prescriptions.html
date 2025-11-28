@@ -1,0 +1,160 @@
+{% extends 'doctor_page/doctor_base.html' %} {% block content %}
+<div class="container mt-4">
+  <div class="container" id="prescription-container">
+    <h4
+      class="text-center"
+      style="font-size: 1.8rem; font-weight: bold; color: #007bff"
+    >
+      DR. ROOK MEDIUM CLINIC
+    </h4>
+    <h5 class="text-center" style="font-size: 1.5rem; color: #343a40">
+      Prescription Paper for {{ patient.full_name}}
+    </h5>
+
+    <div class="row mt-4">
+      <!-- Left column -->
+      <div class="col-md-6">
+        <div class="info-box mb-3 p-3 rounded shadow-sm">
+          <p>
+            <strong>Age:</strong> {{ prescriptions.0.medical_record.patient.age
+            }}
+          </p>
+          <p>
+            <strong>Gender:</strong> {{
+            prescriptions.0.medical_record.patient.get_gender_display }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Right column -->
+      <div class="col-md-6">
+        <div class="info-box mb-3 p-3 rounded shadow-sm">
+          <p>
+            <strong>Address:</strong> {{
+            prescriptions.0.medical_record.patient.address }}
+          </p>
+          <p>
+            <strong>Phone Number:</strong> {{
+            prescriptions.0.medical_record.patient.phone_number }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Prescription Details Section with Table -->
+    <div
+      class="prescription-details mt-4 p-4 border rounded shadow-sm"
+      style="background-color: #f8f9fa; text-align: left; font-size: 1.1rem"
+    >
+      <h5 class="mb-4 text-center" style="color: #007bff">
+        <strong>Prescription Details</strong>
+      </h5>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Medication Name</th>
+            <th>Dosage</th>
+            <th>Duration</th>
+            <th>Instructions</th>
+            <th>Prescribed At</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for prescription in prescriptions %}
+          <tr>
+            <td>{{ prescription.medication_name }}</td>
+            <td>{{ prescription.dosage }}</td>
+            <td>{{ prescription.duration }}</td>
+            <td>{{ prescription.instructions }}</td>
+            <td>{{ prescription.prescribed_at }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Print Button -->
+    <div class="text-center mt-4">
+      <button
+        onclick="window.print()"
+        class="btn btn-primary px-4 py-2"
+        id="print-btn"
+        style="font-size: 1.2rem"
+      >
+        Print Prescription
+      </button>
+    </div>
+  </div>
+
+  <style>
+    /* Custom styles for the printed prescription */
+    .prescription-details p {
+      line-height: 1.6;
+    }
+
+    /* Print Styles */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+
+      #prescription-container,
+      #prescription-container * {
+        visibility: visible;
+      }
+
+      /* Keep content as it appears in the browser */
+      #prescription-container {
+        position: relative;
+        width: auto;
+        max-width: 100%;
+        margin: 0 auto;
+      }
+
+      .row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 15px;
+      }
+
+      .col-md-6 {
+        flex: 0 0 48%;
+      }
+
+      /* Prescription Details Section - Keep as is */
+      .prescription-details {
+        margin-top: 20px;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #f8f9fa;
+        text-align: left;
+      }
+
+      /* Ensure no change to font sizes */
+      .prescription-details p {
+        font-size: 1rem;
+      }
+
+      /* Hide Print Button */
+      #print-btn {
+        display: none;
+      }
+
+      /* Ensure sections are not rearranged during printing */
+      .text-center {
+        text-align: center !important;
+      }
+
+      table {
+        width: 100%;
+        margin-top: 10px;
+      }
+
+      table td {
+        padding: 10px;
+      }
+    }
+  </style>
+</div>
+{% endblock %}

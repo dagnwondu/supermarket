@@ -1,0 +1,187 @@
+{% extends 'receptionist_page/receptionist_base.html'%} {% block content %}
+
+<div class="container mt-4">
+  <h5 class="text-center">Wakin Clients Investigation Request</h5>
+
+  <div class="card p-2 shadow-sm bg-dark text-white rounded">
+    <form id="walkinForm" action="{% url 'submit_walkin_clients_form' %}" method="POST">
+      {% csrf_token %}
+      <!-- Patient Info -->
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Full Name</label>
+          <input type="text" name="full_name" class="form-control" required />
+        </div>
+        <div class="col-md-2 mb-3">
+          <label class="form-label">Age</label>
+          <input type="number" name="age" class="form-control" />
+        </div>
+        <div class="col-md-2 mb-3">
+          <label class="form-label">Gender</label>
+          <select class="form-select" name="gender" required>
+            <option value="" selected disabled>Choose...</option>
+            <option>Male</option>
+            <option>Female</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Referring Hospital/Clinic</label>
+          <input type="text" name="referring_hospital" class="form-control" placeholder="Optional"/>
+        </div>
+      </div>
+
+      <!-- Additional Information -->
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Contact Number</label>
+          <input
+            type="tel"
+            name="contact_number"
+            class="form-control"
+            placeholder="Optional"
+          />
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Referring Doctor</label>
+          <input
+            type="text"
+            name="referring_doctor"
+            class="form-control"
+            placeholder="Optional"
+          />
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Reason for Referral</label>
+          <textarea
+            name="reason_for_referral"
+            class="form-control"
+            rows="2"
+            placeholder="Optional"
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Total Price Section -->
+      <div class="text-center mt-3">
+        <h5>Total Price: <span id="totalPrice">0.00</span> Birr</h5>
+      </div>
+
+      <!-- investigations and Services -->
+      <div class="mb-3">
+        <label class="form-label">Select investigations and Services</label>
+        <div class="border p-3 rounded">
+          <div class="row">
+            <!-- Column 1: Laboratory investigations -->
+            <div class="col-md-6">
+              <h5>Laboratory investigations</h5>
+              {% for service in lab_investigations %}
+              <div class="form-check">
+                <input
+                  class="form-check-input service-checkbox"
+                  type="checkbox"
+                  name="selected_services"
+                  value="{{ service.name }}|{{ service.price }}"
+                  id="labinvestigation{{ forloop.counter }}"
+                  data-price="{{ service.price }}"
+                />
+                <label
+                  class="form-check-label"
+                  for="labinvestigation{{ forloop.counter }}"
+                >
+                  {{ service.name }}------- {{ service.price }} Birr.
+                </label>
+              </div>
+              {% endfor %}
+            </div>
+
+            <!-- Column 2: Imaging investigations -->
+            <div class="col-md-6">
+              <h5>Imaging investigations</h5>
+              {% for service in imaging_investigations %}
+              <div class="form-check">
+                <input
+                  class="form-check-input service-checkbox"
+                  type="checkbox"
+                  name="selected_services"
+                  value="{{ service.name }}|{{ service.price }}"
+                  id="imaginginvestigation{{ forloop.counter }}"
+                  data-price="{{ service.price }}"
+                />
+                <label
+                  class="form-check-label"
+                  for="imaginginvestigation{{ forloop.counter }}"
+                >
+                  {{ service.name }} ---- {{ service.price }}
+                </label>
+              </div>
+              {% endfor %}
+            </div>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="text-center mt-3">
+        <button type="button" class="btn btn-primary" id="submitBtn">
+          Submit
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+  window.addEventListener("DOMContentLoaded", () => {
+    if (window.location.search.includes("submitted=1")) {
+      document.getElementById("walkinForm").reset();
+      document.getElementById("totalPrice").textContent = "0.00";
+    }
+  });
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const checkboxes = document.querySelectorAll(".service-checkbox");
+    const totalPriceElement = document.getElementById("totalPrice");
+    const submitBtn = document.getElementById("submitBtn");
+    const form = document.getElementById("walkinForm");
+
+    function updateTotalPrice() {
+      let total = 0;
+      checkboxes.forEach((checkbox) => {
+        if (checkbox.checked) {
+          total += parseFloat(checkbox.getAttribute("data-price"));
+        }
+      });
+      totalPriceElement.textContent = total.toFixed(2);
+    }
+
+    function validateForm() {
+      const fullName = form.full_name.value.trim();
+      const gender = form.gender.value;
+      const selectedServices = document.querySelectorAll(".service-checkbox:checked");
+
+      if (!fullName || !gender || selectedServices.length === 0) {
+        alert("FullName, gender and Service are MAndatory.");
+        return false;
+      }
+      return true;
+    }
+
+    submitBtn.addEventListener("click", function () {
+      if (validateForm()) {
+        const confirmation = confirm("Are you sure you want to submit this form?");
+        if (confirmation) {
+          form.submit();
+        }
+      }
+    });
+
+    checkboxes.forEach((checkbox) => {
+      checkbox.addEventListener("change", updateTotalPrice);
+    });
+  });
+</script>
+
+
+{% endblock %}

@@ -1,0 +1,142 @@
+{% extends 'doctor_page/doctor_base.html' %} {% block content %}
+<div class="container">
+  <h3 class="mt-4">Patient Details</h3>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <h5 class="card-title">{{ patient.patient.full_name }}</h5>
+      <p class="card-text"><strong>Age:</strong> {{ patient.patient.age }}</p>
+      <p class="card-text">
+        <strong>Gender:</strong> {{ patient.patient.gender }}
+      </p>
+      <p class="card-text">
+        <strong>Time Assigned:</strong> {{ patient.time_assigned }}
+      </p>
+
+      <p class="card-text">
+        <strong>Assignment Accepted:</strong> {{ patient.assignment_accepted }}
+      </p>
+    </div>
+  </div>
+
+  <!-- Patient Interview Status -->
+  <div class="card mb-3">
+    <div class="card-header bg-dark text-white">Patient Interview</div>
+    <div class="card-body">
+      {% if patient.interview_status == "Completed" %}
+      <p>
+        <strong>Status:</strong> <span class="badge bg-success">Completed</span>
+      </p>
+      {% else %}
+      <p>
+        <strong>Status:</strong> <span class="badge bg-warning">Pending</span>
+      </p>
+
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Vitals Section -->
+  <div class="card mb-3">
+    <div class="card-header bg-info text-white">Vitals</div>
+    <div class="card-body">
+      {% if patient.vitals_status == "Completed" %}
+      <p>
+        <strong>Status:</strong> <span class="badge bg-success">Completed</span>
+      </p>
+      <p>
+        <strong>Blood Pressure:</strong> {{ patient.vitals.blood_pressure }}
+      </p>
+      <p><strong>Heart Rate:</strong> {{ patient.vitals.heart_rate }}</p>
+      <p><strong>Temperature:</strong> {{ patient.vitals.temperature }}</p>
+      {% elif patient.vitals_status == "Pending" %}
+      <p>
+        <strong>Status:</strong> <span class="badge bg-warning">Pending</span>
+      </p>
+      {% else %}
+      <p>
+        <strong>Status:</strong>
+        <span class="badge bg-secondary">Not Assigned</span>
+      </p>
+      <form method="POST" action="{% url 'assign_vitals' patient.id %}">
+        {% csrf_token %}
+        <button
+          type="submit"
+          class="btn btn-info"
+          {%
+          if
+          patient.interview_status
+          !="Completed"
+          %}disabled{%
+          endif
+          %}
+        >
+          Assign Vitals Check
+        </button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Lab Test Section -->
+  <div class="card mb-3">
+    <div class="card-header bg-primary text-white">Lab Tests</div>
+    <div class="card-body">
+      {% if patient.lab_tests.exists %}
+      <ul>
+        {% for test in patient.lab_tests.all %}
+        <li>
+          <strong>{{ test.test_name }}</strong> -
+          <span class="badge bg-success">{{ test.status }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p>No lab tests assigned.</p>
+      {% endif %}
+
+      <form method="POST" action="{% url 'assign_lab_test' patient.id %}">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label for="lab_test" class="form-label">Select Lab Test</label>
+          <select
+            name="lab_test"
+            id="lab_test"
+            class="form-select"
+            required
+            {%
+            if
+            patient.interview_status
+            !="Completed"
+            %}disabled{%
+            endif
+            %}
+          >
+            <option value="">Choose a test</option>
+            {% for test in lab_tests %}
+            <option value="{{ test.id }}">{{ test.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button
+          type="submit"
+          class="btn btn-primary"
+          {%
+          if
+          patient.interview_status
+          !="Completed"
+          %}disabled{%
+          endif
+          %}
+        >
+          Assign Lab Test
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <a href="{% url 'doctor_view' %}" class="btn btn-secondary"
+    >Back to Dashboard</a
+  >
+</div>
+{% endblock %}

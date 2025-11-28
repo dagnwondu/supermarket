@@ -1,0 +1,71 @@
+{% extends 'reception_page/reception_base.html' %} {% block content %}
+<div class="container" id="voucher-container">
+  <h4 style="text-align: center">DR. ROOK MEDIUM CLINIC</h4>
+  <h5 style="text-align: center">Payment Voucher</h5>
+
+  <p><strong>Client Name:</strong> {{ patient.full_name }}</p>
+  <p><strong>Total Amount:</strong> {{ total_amount|floatformat:2 }}</p>
+
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Service Type</th>
+        <th>Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for payment in payments %}
+      <tr>
+        <td>{{ payment.service_type }}</td>
+        <td>{{ payment.amount|floatformat:2 }}</td>
+      </tr>
+      {% endfor %}
+      <!-- Total Amount Row -->
+      <tr>
+        <td><strong>Total</strong></td>
+        <td><strong>{{ total_amount|floatformat:2 }}</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <button class="btn btn-success" id="print-btn" onclick="window.print();">
+    Print Voucher
+  </button>
+</div>
+
+{% block extra_css %}
+<style>
+  @media print {
+    /* Hide everything except the voucher content */
+    body * {
+      visibility: hidden;
+    }
+    #voucher-container,
+    #voucher-container * {
+      visibility: visible;
+    }
+    #voucher-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    /* Hide the Print button */
+    #print-btn {
+      display: none;
+    }
+
+    /* Optional: Style the print for better readability */
+    .table {
+      border: 1px solid #000;
+      width: 100%;
+      margin-top: 20px;
+    }
+    th,
+    td {
+      padding: 8px;
+      text-align: left;
+    }
+  }
+</style>
+{% endblock %} {% endblock %}

@@ -1,0 +1,95 @@
+{% extends 'admin_page/admin_base.html'%} {% block content %}
+
+<div class="container mt-4">
+    <h3 class="mb-3">Payment Reports</h3>
+    {% now "Y-m-d" as default_today %}
+
+    <!-- Filter Form -->
+    <form method="GET" class="row g-3">
+      <div class="col-md-2">
+        <label for="date" class="form-label">Date:</label>
+        <input type="date" name="date" id="date" class="form-control"
+        value="{{ request.GET.date|default:default_today }}">
+        </div>
+  
+      <div class="col-md-2">
+        <label for="patient" class="form-label">Patient:</label>
+        <input type="text" name="patient" id="patient" class="form-control" placeholder="Enter patient name" value="{{ request.GET.patient }}">
+      </div>
+  
+      <div class="col-md-2">
+        <label for="service" class="form-label">Service Type:</label>
+        <input type="text" name="service" id="service" class="form-control" placeholder="Enter service" value="{{ request.GET.service }}">
+      </div>
+  
+      <div class="col-md-2">
+        <label for="status" class="form-label">Status:</label>
+        <select name="status" id="status" class="form-control">
+          <option value="">All</option>
+          <option value="Pending" {% if request.GET.status == "Pending" %}selected{% endif %}>Pending</option>
+          <option value="Completed" {% if request.GET.status == "Completed" %}selected{% endif %}>Completed</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label for="user" class="form-label">Select Cashier:</label>
+        <select name="user" id="user" class="form-control">
+          <option value="">All</option>
+          {%for user in users %}
+          <option value="{{user}}" {% if request.GET.user == "{{user}}" %}selected{% endif %}>{{user}}</option>
+          {%endfor%}
+        </select>
+      </div>
+  
+  
+      <div class="col-md-2 align-self-end">
+        <button type="submit" class="btn btn-primary w-100">Filter</button>
+      </div>
+    </form>
+  
+    <!-- Export Button -->
+    <div class="text-end my-3">
+      <a href="{% url 'export_payments_excel' %}" class="btn btn-success">
+        <i class="bi bi-file-earmark-excel"></i> Export to Excel
+      </a>
+    </div>
+  
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Patient</th>
+                <th>Service Type</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Cashier</th>
+                <th>Paid Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment in payments %}
+            <tr>
+                <td>{{ payment.patient.full_name }}</td>
+                <td>{{ payment.service_type }}</td>
+                <td>{{ payment.amount }}</td>
+                <td>{{ payment.status }}</td>
+                <td>{{ payment.created_by }}</td>                
+                <td>{{ payment.created_at|date:"Y-m-d " }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2"><strong>Total</strong></td>
+            <td><strong>{{ total_amount }}</strong></td>
+            <td colspan="4"></td>
+          </tr>
+        </tfoot>
+        
+    </table>
+    
+   
+    
+    </table>
+    
+  
+  
+  {% endblock %}

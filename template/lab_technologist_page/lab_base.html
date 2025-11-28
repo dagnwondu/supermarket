@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{company_name}}</title>
+    <link
+      rel="stylesheet"
+      href="{% static 'bootstrap/css/bootstrap.min.css' %}"
+    />
+    <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+
+      #wrapper {
+        display: flex;
+        flex-direction: row;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      #sidebar-wrapper {
+        height: 100vh;
+        width: 250px;
+        background-color: #343a40;
+        color: white;
+        transition: all 0.3s ease;
+        position: fixed;
+        left: -250px;
+        z-index: 1000;
+      }
+
+      #wrapper.toggled #sidebar-wrapper {
+        left: 0;
+      }
+
+      #page-content-wrapper {
+        flex-grow: 1;
+        transition: all 0.3s ease;
+        margin-left: 0;
+        padding: 20px;
+        width: 100%;
+      }
+
+      #wrapper.toggled #page-content-wrapper {
+        margin-left: 250px;
+      }
+
+      .sidebar-heading {
+        background-color: #212529;
+        font-size: 1.25rem;
+        padding: 1rem;
+        text-align: center;
+      }
+
+      .list-group-item {
+        border: none;
+      }
+
+      .list-group-item:hover {
+        background-color: #575549;
+      }
+
+      .hamburger {
+        cursor: pointer;
+        border: none;
+        background: none;
+        padding: 0;
+        margin-left: 1rem;
+      }
+
+      .hamburger .line {
+        width: 25px;
+        height: 3px;
+        background-color: #000;
+        margin: 5px 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="wrapper">
+      <!-- Sidebar -->
+      <div id="sidebar-wrapper">
+        <div class="sidebar-heading">{{company_name}}</div>
+        <div class="list-group list-group-flush">
+          <a
+            href="/lab_technologist_view/"
+            class="list-group-item list-group-item-action bg-dark text-white"
+            >Dashboard</a
+          >
+
+          <a
+            class="list-group-item list-group-item-action bg-dark text-white dropdown-toggle"
+            data-bs-toggle="collapse"
+            href="#labDropdown"
+            role="button"
+            aria-expanded="false"
+            aria-controls="labDropdown"
+          >
+            Lab Reports
+          </a>
+          <div class="collapse" id="labDropdown">
+            <a
+              href=" {% url 'today_lab_reports'%}"
+              class="list-group-item list-group-item-action bg-dark text-white ps-4"
+              >Today's Lab Reports</a
+            >
+            <a
+              href="#"
+              class="list-group-item list-group-item-action bg-dark text-white ps-4"
+              >Lab Report By Patient</a
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- Page Content -->
+      <div id="page-content-wrapper">
+        <nav
+          class="navbar navbar-expand-lg navbar-light bg-light border-bottom"
+        >
+          <button class="hamburger" id="menu-toggle">
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+          </button>
+          <a class="navbar-brand ms-3" href="/lab_technologist_view/"
+            >{{company_name}}</a
+          >
+
+          <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+              <li class="nav-item">
+                <a class="nav-link" href="/lab_technologist_view/">Home</a>
+              </li>
+              <li class="nav-item"><a class="nav-link" href="#">Profile</a></li>
+              <li class="nav-item">
+                <form
+                  action="{% url 'logout' %}"
+                  method="post"
+                  style="display: inline"
+                >
+                  {% csrf_token %}
+                  <button type="submit" class="nav-link btn btn-link">
+                    Logout
+                  </button>
+                </form>
+              </li>
+            </ul>
+          </div>
+        </nav>
+
+        <div class="container-fluid mt-3">
+          <div>{% block content %}{% endblock %}</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document
+        .getElementById("menu-toggle")
+        .addEventListener("click", function () {
+          document.getElementById("wrapper").classList.toggle("toggled");
+        });
+    </script>
+  </body>
+</html>

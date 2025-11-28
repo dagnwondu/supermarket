@@ -1,0 +1,199 @@
+{% extends 'receptionist_page/receptionist_base.html' %}
+{% block content %}
+
+<div class="container">
+<h5 class="text-center text-white bg-primary">Prescriptions for {{ patient }}</h5>
+</div>
+{% if prescriptions %}
+<div class="container-fluid table-responsive">
+  <table class="table">
+    <tr>
+      <th>S.No</th>
+      <th>Prescription Note</th>
+      <th>Prescribed at</th>
+    </tr>
+    {% for prescription in prescriptions %}
+    <tr>
+      <td style="width: 5%;">{{ forloop.counter }}</td>
+      <td style="width: 80%;">{{ prescription.prescription_note }}</td>
+      <td style="width: 15%;">{{ prescription.prescribed_at }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+<div class="container">
+  <h5 class="text-center text-white bg-primary">Medicines</h5>
+
+  <!-- Total Price Section -->
+  <div class="text-center mt-3">
+    <h5>Total Price: <span id="totalPrice">0.00</span> Birr</h5>
+  </div>
+<!-- Selected Medicines Section -->
+<!-- Selected Medicines Section -->
+  <div class="mt-3">
+    <h6>Selected Medicines:</h6>
+    <div id="selectedMedicinesList" class="d-flex flex-wrap gap-2"></div>
+  </div>
+
+  <style>
+    .hover-bg-primary:hover {
+      background-color: coral;
+      color: #ffffff;
+      padding: 5px;
+    }
+  </style>
+
+  <!-- Form Start -->
+  <form method="post" id="referralForm" action="{% url 'sale_medicines' patient.id%}">
+    {% csrf_token %}
+    <div class="border p-3 rounded ">
+      <div class="row">
+        {% for medicine in medicines %}
+          {% if forloop.counter0|divisibleby:4 %}
+            </div><div class="row mb-3 ">
+          {% endif %}
+          <div class="col-md-3 card ">
+            <div class="form-check d-flex align-items-center p-3 ">
+              <input
+                class="form-check-input medicine-checkbox hover-bg-primary me-2"
+                type="checkbox"
+                name="selected_medicines"
+                value="{{ medicine.name }}"
+                id="med{{ forloop.counter }}"
+                data-price="{{ medicine.unit_price }}"
+              />
+              <label class="form-check-label me-2  hover-bg-primary" for="med{{ forloop.counter }}">
+                {{ medicine.name }} ({{ medicine.unit_price }} Birr/unit)
+              </label>
+
+              <input
+                type="number"
+                name="quantity_{{ medicine.name }}"
+                class="form-control form-control-sm quantity-input me-2"
+                data-checkbox-id="med{{ forloop.counter }}"
+                value="1"
+                min="1"
+                max="{{ medicine.stock_qty }}"
+                style="width: 80px;"
+                disabled
+              />
+              <span class="text-muted small">(Max: {{ medicine.stock_qty }})</span>
+            </div>
+            <div class="mt-1">
+              <span class="individual-price text-secondary" data-price-id="med{{ forloop.counter }}">0.00 Birr</span>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Submit Button -->
+    <div class="text-center mt-3">
+      <button type="button" class="btn btn-primary" id="submitBtn">
+        Submit
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const checkboxes = document.querySelectorAll(".medicine-checkbox");
+    const totalPriceElement = document.getElementById("totalPrice");
+    const selectedListContainer = document.getElementById("selectedMedicinesList");
+
+    function updatePricesAndList() {
+      let total = 0;
+      selectedListContainer.innerHTML = ''; // Clear previous list
+
+      checkboxes.forEach((checkbox) => {
+        const checkboxId = checkbox.id;
+        const unitPrice = parseFloat(checkbox.getAttribute("data-price"));
+        const quantityInput = document.querySelector(`.quantity-input[data-checkbox-id="${checkboxId}"]`);
+        const individualPriceDisplay = document.querySelector(`.individual-price[data-price-id="${checkboxId}"]`);
+
+        let itemTotal = 0;
+
+        if (checkbox.checked && quantityInput) {
+          let quantity = parseInt(quantityInput.value) || 1;
+          const max = parseInt(quantityInput.getAttribute("max"));
+          if (quantity > max) {
+            quantity = max;
+            quantityInput.value = max;
+            alert(`Stock limit reached for ${checkbox.value}`);
+          } else if (quantity < 1) {
+            quantity = 1;
+            quantityInput.value = 1;
+          }
+          itemTotal = unitPrice * quantity;
+          total += itemTotal;
+
+          // Create grid item (col-md-4 = 3 columns)
+          const badge = document.createElement('div');
+          badge.className = 'badge bg-primary text-white p-2 d-flex align-items-center';
+          
+          badge.style.maxWidth = '100%';
+          badge.style.gap = '10px';
+
+          badge.innerHTML = `
+            <span>${checkbox.value} (x${quantity})</span>
+            <button type="button" class="btn-close btn-lg cancel-btn" data-id="${checkboxId}" aria-label="Close" style="background-color: red;"></button>
+
+          `;
+
+          selectedListContainer.appendChild(badge);
+
+        }
+
+        // Show price per medicine
+        if (individualPriceDisplay) {
+          individualPriceDisplay.textContent = itemTotal.toFixed(2) + " Birr";
+        }
+      });
+
+      totalPriceElement.textContent = total.toFixed(2);
+      attachCancelEvents();
+    }
+
+    function attachCancelEvents() {
+      const cancelButtons = document.querySelectorAll(".cancel-btn");
+      cancelButtons.forEach((btn) => {
+        btn.addEventListener("click", function () {
+          const checkboxId = btn.getAttribute("data-id");
+          const checkbox = document.getElementById(checkboxId);
+          const quantityInput = document.querySelector(`.quantity-input[data-checkbox-id="${checkboxId}"]`);
+
+          if (checkbox) checkbox.checked = false;
+          if (quantityInput) {
+            quantityInput.disabled = true;
+            quantityInput.value = 1;
+          }
+          updatePricesAndList();
+        });
+      });
+    }
+
+    checkboxes.forEach((checkbox) => {
+      const checkboxId = checkbox.id;
+      const quantityInput = document.querySelector(`.quantity-input[data-checkbox-id="${checkboxId}"]`);
+
+      checkbox.addEventListener("change", function () {
+        quantityInput.disabled = !checkbox.checked;
+        if (!checkbox.checked) quantityInput.value = 1;
+        updatePricesAndList();
+      });
+
+      quantityInput.addEventListener("input", updatePricesAndList);
+    });
+
+    document.getElementById("submitBtn").addEventListener("click", function () {
+      const confirmation = confirm("Are you sure you want to submit this form?");
+      if (confirmation) {
+        document.getElementById("referralForm").submit();
+      }
+    });
+  });
+</script>
+{% endblock %}

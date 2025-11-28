@@ -1,0 +1,86 @@
+{% extends 'lab_technologist_page/lab_base.html' %} 
+{% block content %}
+<div class="container-fluid">
+  <h6>Welcome, {{ request.user.first_name }}</h6>
+  <div class="container">
+    <div class="col">
+      {% if lab_investigations %}
+      <h6 style="text-align: center; color: blue">
+        Lab Request For Regular Clients
+      </h6>
+      <table class="table table-striped table-hover table-bordered">
+        <thead>
+          <tr>
+            <th scope="col">S.No</th>
+            <th scope="col">Patient Name</th>
+            <th scope="col">Service Name</th>
+            <th scope="col">Payment Status</th>
+            <th scope="col">Time Created</th>
+            <th scope="col">Insert Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for service in lab_investigations %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ service.patient.full_name }}</td>
+            <td>{{ service.investigation_name.name }}</td>
+            <td>{{ service.payment_status }}</td>
+            <td>{{ service.time_created}}</td>
+            <td>
+              {% if service.payment_status == "Pending" %}
+              <a class="btn btn-danger" disabled>Insert Result</a>
+              {% else %}
+              <a href="{% url 'enter_investigation_results' service.patient.id service.investigation_name.name  %}"
+                class="btn btn-primary" >Insert Result  </a>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %} 
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      {% endif %}
+    </div>
+    <div class="col">
+      {% if walkin_lab_investigations %}
+      <h6 style="text-align: center; color: blue">
+        Lab Request For Walk-in Clients
+      </h6>
+      <table class="table table-striped table-hover table-bordered">
+        <thead>
+          <tr>
+            <th scope="col">S.No</th>
+            <th scope="col">Patient Name</th>
+            <th scope="col">Service Name</th>
+            <th scope="col">Time Created</th>
+            <th scope="col">Insert Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for service in walkin_lab_investigations %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ service.walkin_patient.full_name }}</td>
+            <td>{{ service.investigation.name }}</td>
+            <td>{{ service.time_created}}</td>
+            <td>
+              <a
+                href="{% url 'enter_walkin_investigation_results' service.walkin_patient.id service.investigation.name %}"
+                class="btn btn-primary"
+              >
+                Insert Result
+              </a>
+            </td>
+          </tr>
+          {% empty %} 
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %} 
+      {%endif%}
+    </div>
+  </div>
+  {% endblock %}
+</div>

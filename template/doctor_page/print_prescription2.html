@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Prescription Paper</title>
+    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
+
+    <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+
+   
+    <style>
+      body {
+        background-color: #f8f9fa;
+      }
+      .prescription-container {
+        background: #edf415e4;
+        padding: 20px;
+        margin: 20px auto;
+        border: 2px solid #000;
+        max-width: 800px;
+      }
+      .header,
+      .footer {
+        text-align: center;
+        font-weight: bold;
+      }
+      .line {
+        border-bottom: 1px solid #000;
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container prescription-container">
+      <div class="header">
+        <h5>Kiliinika Giddugaleessa Biruuk</h5>
+        <h5>ብሩክ መካከለኛ ክሊኒክ</h5>
+        <h5>Brook Medium Clinic</h5>
+        <hr />
+        <h6>አድራሻ፡ ጅማ ከተማ ፈረንጅ አራዳ ዋልያ ሆቴል አጠገብ</h6>
+        <p>Prescription paper</p>
+      </div>
+
+      <hr />
+      <div>
+        <p>
+          <strong>Patient's Full Name: </strong>
+          {{patient.full_name}}
+        </p>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <p>
+            <strong>Age:</strong>
+            {{patient.age}}
+          </p>
+        </div>
+        <div class="col-md-2">
+          <p>
+            <strong>Sex:</strong>
+            {{patient.gender}}
+          </p>
+        </div>
+        <div class="col-md-2">
+          <p>
+            <strong>Weight:</strong>
+            {{patient.weight}} __kg
+          </p>
+        </div>
+        <div class="col-md-3">
+          <p>
+            <strong>Card No:</strong>
+            {{patient.card_number}}
+          </p>
+        </div>
+        <div class="col-md-3">
+          <p>
+            <strong>Tel. No:</strong>
+            {{patient.phone_number}}
+          </p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-3">
+          <p>
+            <strong>Region:</strong>
+            {{patient.region}}
+          </p>
+        </div>
+        <div class="col-md-3">
+          <p>
+            <strong>Town:</strong> {{patient.town}}
+          </p>
+        </div>
+        <div class="col-md-3">
+          <p>
+            <strong>Woreda:</strong>
+            {{patient.woreda}}
+          </p>
+        </div>
+        <div class="col-md-3">
+          <p>
+            <strong>Kebele:</strong>
+            {{patient.kebele}}
+          </p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-4">
+          <p>
+            <strong>House No:</strong>
+            {{patient.house_number}}
+          </p>
+        </div>
+        <div class="col-md-4">
+          <p><input type="checkbox" /> Outpatient</p>
+        </div>
+        <div class="col-md-4">
+          <p><input type="checkbox" checked /> Inpatient</p>
+        </div>
+        
+      </div>
+    <div class="row container">
+      <div class="row">
+        <div class="col-md-4">
+          <p><strong>Diagnosis (if not ICD):<p class="line">&nbsp;</p></strong>  
+            
+        </div>
+        </div>
+        <div class="row">
+             <div class="col-md-6">
+            <p><input type="checkbox" /> Allergy</p>
+          </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12">
+          <h6><strong>Prescription List:</strong></h6>
+          <ul>
+            {% for prescription in prescriptions %}
+              <li>{{ prescription.prescription_note }}</li>
+            {% empty %}
+              <li>No prescriptions available.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      
+
+      <hr />
+      <div class="row">
+        <div class="col-md-6">
+          <p><strong>Prescriber’s:</strong></p>
+          <p>Full Name: </p>
+          <p>Qualification: </p>
+          <p>License No: </p>
+        </div>
+        <div class="col-md-6">
+          <p><strong>Dispenser's:</strong></p>
+          <p class="line">&nbsp;</p>
+          <p class="line">&nbsp;</p>
+          <p class="line">&nbsp;</p>
+        </div>
+      </div>
+    </div>
+    <script>
+      window.onload = function() {
+        window.print();
+      };
+    </script>
+    
+  </body>
+</html>

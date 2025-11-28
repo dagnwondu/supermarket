@@ -1,0 +1,44 @@
+{% extends 'lab_technologist_page/lab_base.html' %} 
+{% block content %}
+<div class="container">
+  <h5 style="text-align: center">{{company_name}}</h5>
+  <h5 style="text-align: center">Laboratory Result</h5>
+
+  <label for="name">Client Name: {{ patient.full_name }}</label><br />
+  <label for="name">Client MRN: {{ patient.card_number }}</label><br>
+  <label for="name">Investigation: {{ service_name }}</label>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-sm">
+      <thead class="table-light">
+        <tr>
+          <th>Parameter / Module</th>
+          <th>Result</th>
+          <th>Unit</th>
+          <th>Normal Range</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for result in investigation_result %}
+        <tr>
+          <td>{{ result.parameter.name }}</td>
+          <td>{{ result.value }}</td>
+          <td>{{ result.parameter.unit }}</td>
+          <td>
+            {% if result.parameter.min_value and result.parameter.max_value %}
+              {{ result.parameter.min_value }} - {{ result.parameter.max_value }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" class="text-center">No results available for this investigation.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

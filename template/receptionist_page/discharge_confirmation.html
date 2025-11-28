@@ -1,0 +1,42 @@
+{% extends 'receptionist_page/receptionist_base.html' %}
+{% block content %}
+<h5>Welcome: {{ request.user.first_name }}</h5>
+<div class="card shadow p-4 mt-4">
+  <h4 class="mb-3 text-primary">
+    Confirm Discharge — {{ admission.patient.full_name }}
+  </h4>
+
+  <table class="table table-bordered">
+    <tr>
+      <th>Admission Date</th>
+      <td>{{ admission.admission_date|date:"Y-m-d" }}</td>
+    </tr>
+    <tr>
+      <th>Ward</th>
+      <td>{{ admission.ward.name }}</td>
+    </tr>
+    <tr>
+      <th>Daily Rate</th>
+      <td>{{ daily_rate }} ETB</td>
+    </tr>
+    <tr>
+      <th>Total Days</th>
+      <td>{{ stay_days }}</td>
+    </tr>
+    <tr class="fw-bold">
+      <th>Total Charge</th>
+      <td>{{ total_charge }} ETB</td>
+    </tr>
+  </table>
+
+  <form method="POST" onsubmit="return confirm('Are you sure you want to discharge this patient?');">
+    {% csrf_token %}
+    <div class="d-flex justify-content-between mt-3">
+      <a href="{% url 'receptionist_view' %}" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn btn-danger">
+        <i class="bi bi-box-arrow-right"></i> Confirm Discharge
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends 'doctor_page/doctor_base.html' %} {% block content %}
+<div class="container mt-4">
+  <h5 class="mb-4 text-primary">Previous Medical History for: {{ patient }}</h5>
+
+  <div class="row g-4">
+    {% for history in medical_history %}
+    <div class="col-md-12">
+      <div class="card shadow-sm border-primary h-100">
+        <div class="card-header bg-primary text-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="badge bg-light text-dark"
+              >{{ history.get_status_display }}</span
+            >
+          </div>
+          <p class="mt-2 mb-0">
+            <strong>Diagnosis:</strong> {{ history.diagnosis }}
+          </p>
+        </div>
+
+        <div class="card-body">
+          <p><strong>Visit Date:</strong> {{ history.last_visit }}</p>
+
+          <!-- Prescription -->
+          <p><strong>PrescriptionS:</strong></p>
+          <ul>
+            {% for prescription in history.prescriptions.all %}
+            <li>
+              {{ prescription.prescription_note }}
+              ({{prescription.prescribed_at|date:"Y-m-d H:i"}})
+            </li>
+            {% empty %}
+            <li>No prescriptions available.</li>
+            {% endfor %}
+          </ul>
+
+          <!-- Vitals -->
+          {% if history.vitals %}
+          <p><strong>Vitals:</strong></p>
+          <ul>
+            <li>Weight: {{ history.vitals.weight }} kg</li>
+            <li>Temperature: {{ history.vitals.temperature }} °C</li>
+            <li>BP: {{ history.vitals.blood_pressure }}</li>
+            <li>Heart Rate: {{ history.vitals.heart_rate }}</li>
+            <li>Respiratory Rate: {{ history.vitals.respiratory_rate }}</li>
+            <li>Glucose: {{ history.vitals.blood_glucose }} mg/dL</li>
+            <li>
+              O₂ Sat (No O₂): {{history.vitals.oxygen_saturation_no_oxygen}}%
+            </li>
+            <li>
+              O₂ Sat (With O₂):
+              {{history.vitals.oxygen_saturation_with_oxygen}}%
+            </li>
+            <li>Status: {{ history.vitals.status }}</li>
+          </ul>
+          {% endif %}
+
+          <!-- History Taking -->
+          {% if history.historytaking %}
+          <p><strong>History Taking:</strong></p>
+          <ul>
+            <li>Chief Complaint: {{ history.historytaking.chief_complain }}</li>
+            <li>HPI: {{ history.historytaking.hpi }}</li>
+            <li>
+              Past Illness: {{ history.historytaking.history_of_past_illness }}
+            </li>
+          </ul>
+          {% endif %}
+
+          <!-- Physical Exam -->
+          {% if history.physicalexamination %}
+          <p><strong>Physical Examination:</strong></p>
+          <ul>
+            <li>
+              General: {{ history.physicalexamination.general_appearance }}
+            </li>
+            <li>HEENT: {{ history.physicalexamination.heent }}</li>
+            <li>LGS: {{ history.physicalexamination.lgs }}</li>
+            <li>Chest: {{ history.physicalexamination.chest }}</li>
+            <li>CVS: {{ history.physicalexamination.cvs }}</li>
+            <li>Abdomen: {{ history.physicalexamination.abdomen }}</li>
+            <li>GUS: {{ history.physicalexamination.gus }}</li>
+            <li>MSS: {{ history.physicalexamination.mss }}</li>
+            <li>CNS: {{ history.physicalexamination.cns }}</li>
+          </ul>
+          {% endif %}
+
+          <!-- Imaging Tests -->
+          <p><strong>Imaging Tests:</strong></p>
+          <ul>
+            {% for test in history.imaging_tests.all %}
+            <li>
+              {{ test.imaging_test_name.name }} - {{ test.result }} ({{
+              test.conclusion }})
+            </li>
+            {% empty %}
+            <li>No imaging tests done.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+      <div class="alert alert-info text-center">
+        No medical history available for this patient.
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

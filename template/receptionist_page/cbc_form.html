@@ -1,0 +1,180 @@
+<!-- cbc_form.html -->
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CBC Form</title>
+    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
+
+    <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+
+   
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h1 class="text-center">CBC Form</h1>
+
+      <form method="POST">
+        {% csrf_token %}
+
+        <!-- Wrap the form fields in a card for better design -->
+        <div class="card">
+          <div class="card-body">
+            <div class="form-group">
+              <label for="id_patient_id">Patient ID</label>
+              <input
+                type="text"
+                class="form-control"
+                name="patient_id"
+                value="{{ form.patient_id.value }}"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="id_name">Name</label>
+              <input
+                type="text"
+                class="form-control"
+                name="name"
+                value="{{ form.name.value }}"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="id_ward">Ward</label>
+              <input
+                type="text"
+                class="form-control"
+                name="ward"
+                value="{{ form.ward.value }}"
+              />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label for="id_wbc">WBC</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  class="form-control"
+                  name="wbc"
+                  value="{{ form.wbc.value }}"
+                />
+              </div>
+              <div class="form-group col-md-6">
+                <label for="id_rbc">RBC</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  class="form-control"
+                  name="rbc"
+                  value="{{ form.rbc.value }}"
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label for="id_hgb">Hemoglobin (HGB)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  class="form-control"
+                  name="hgb"
+                  value="{{ form.hgb.value }}"
+                />
+              </div>
+              <div class="form-group col-md-6">
+                <label for="id_hct">Hematocrit (HCT)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  class="form-control"
+                  name="hct"
+                  value="{{ form.hct.value }}"
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label for="id_mcv">MCV</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  class="form-control"
+                  name="mcv"
+                  value="{{ form.mcv.value }}"
+                />
+              </div>
+              <div class="form-group col-md-6">
+                <label for="id_mch">MCH</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  class="form-control"
+                  name="mch"
+                  value="{{ form.mch.value }}"
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label for="id_mchc">MCHC</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  class="form-control"
+                  name="mchc"
+                  value="{{ form.mchc.value }}"
+                />
+              </div>
+              <div class="form-group col-md-6">
+                <label for="id_plt">Platelets (PLT)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  class="form-control"
+                  name="plt"
+                  value="{{ form.plt.value }}"
+                />
+              </div>
+            </div>
+
+            <!-- You can add more fields here using similar structure -->
+
+            <div class="form-group">
+              <label for="id_wbc_message">WBC Message</label>
+              <textarea class="form-control" name="wbc_message">
+{{ form.wbc_message.value }}</textarea
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="id_rbc_message">RBC Message</label>
+              <textarea class="form-control" name="rbc_message">
+{{ form.rbc_message.value }}</textarea
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="id_plt_message">PLT Message</label>
+              <textarea class="form-control" name="plt_message">
+{{ form.plt_message.value }}</textarea
+              >
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">
+              Submit
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    
+  </body>
+</html>

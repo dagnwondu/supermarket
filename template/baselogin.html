@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+  <head>
+    <title>Waysington Digital Solution</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link
+      rel="stylesheet"
+      href="{% static 'bootstrap/css/bootstrap.min.css' %}"
+    />
+    <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <style>
+      .login-header {
+        text-align: center;
+        margin-bottom: 10px;
+      }
+      .login-header h3 {
+        padding-top: 30px;
+        margin: 0;
+      }
+      @media (min-width: 992px) {
+        .login-container {
+          max-width: 500px;
+          padding: 30px;
+        }
+      }
+    </style>
+  </head>
+  <!-- <img src="{% static 'logo.png' %}" alt="Logo"> -->
+
+  <body class="bg-light">
+    <div class="container-fluid">
+      {% if messages %} {% for message in messages %}
+      <div
+        class="alert alert-{{ message.tags }} alert-dismissible fade show"
+        role="alert"
+      >
+        {{ message }}
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="alert"
+          aria-label="Close"
+        ></button>
+      </div>
+      {% endfor %} {% endif %} {% block content %}
+      <!-- Login form content will be injected here -->
+      {% endblock %}
+    </div>
+    {% load static %}
+  </body>
+</html>

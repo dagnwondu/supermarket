@@ -1,0 +1,45 @@
+{% extends 'receptionist_page/receptionist_base.html'%} {% block content %}
+
+
+<h6>Welcome: {{ user.first_name }}</h6>
+
+<div class="container mt-4">
+  <h4 class="mb-3">📅 Schedule Appointment for {{ patient.full_name }}</h4>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="mb-3 col-md-6">
+      <label for="appointment_date" class="form-label">Appointment Date</label>
+      <input type="datetime-local" id="appointment_date" name="appointment_date"
+             class="form-control form-control-md" value="{{ today }}" required>
+    </div>
+
+    <div class="mb-3 col-md-6">
+      <label for="doctor" class="form-label">Assign Doctor</label>
+      <select name="doctor" id="doctor" class="form-select form-select-md" required>
+        <option value="">Select Doctor</option>
+        {% for doctor in doctors %}
+          <option value="{{ doctor.id }}">{{ doctor.get_full_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3 col-md-6">
+      <label for="appointment_type" class="form-label">Appointment Type</label>
+      <select name="appointment_type" id="appointment_type" class="form-select form-select-md">
+        <option value="OPD">OPD</option>
+        <option value="Lab">Lab</option>
+        <option value="Imaging">Imaging</option>
+      </select>
+    </div>
+
+    <div class="mb-3 col-md-8">
+      <label for="reason" class="form-label">Reason / Note</label>
+      <textarea name="reason" id="reason" class="form-control form-control-md" rows="3"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">💾 Save Appointment</button>
+    <a href="{% url 'receptionist_view' %}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}

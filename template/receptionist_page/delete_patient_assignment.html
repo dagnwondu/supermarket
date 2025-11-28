@@ -1,0 +1,8 @@
+<form method="post">
+  {% csrf_token %}
+  <p>
+    Are you sure you want to delete the assignment for {{ patient.patient }}?
+  </p>
+  <button type="submit">Yes, Delete</button>
+  <a href="{% url 'assignment-list' %}">Cancel</a>
+</form>

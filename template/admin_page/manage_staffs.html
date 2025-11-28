@@ -1,0 +1,251 @@
+{% extends 'admin_page/admin_base.html'%} {% block content %}
+
+<h6>Welcome: {{ user.first_name }}</h6>
+<h1 style="text-align: center">Manage Staffs</h1>
+
+{% if messages %}
+<div class="alert alert-info">
+  {% for message in messages %}
+  <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Button to trigger the modal -->
+<button
+  type="button"
+  class="btn btn-primary"
+  data-bs-toggle="modal"
+  data-bs-target="#addStaffModal"
+>
+  Add Staff
+</button>
+
+<!-- Modal for adding new Staff -->
+<!-- Modal for adding new Staff -->
+<div
+  class="modal fade"
+  id="addStaffModal"
+  tabindex="-1"
+  aria-labelledby="addStaffModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="addStaffModalLabel">Add New Staff</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <!-- Staff Form Fields -->
+          <div class="mb-3">
+            <label
+              for="{{ user_form.username.id_for_label }}"
+              class="form-label"
+              >{{ user_form.username.label }}</label
+            >
+            {{ user_form.username }}
+          </div>
+
+          <div class="mb-3">
+            <label
+              for="{{ user_form.first_name.id_for_label }}"
+              class="form-label"
+              >{{ user_form.first_name.label }}</label
+            >
+            {{ user_form.first_name }}
+          </div>
+          <div class="mb-3">
+            <label
+              for="{{ user_form.last_name.id_for_label }}"
+              class="form-label"
+              >{{ user_form.last_name.label }}</label
+            >
+            {{ user_form.last_name }}
+          </div>
+          <div class="mb-3">
+            <label for="{{ user_form.email.id_for_label }}" class="form-label"
+              >{{ user_form.email.label }}</label
+            >
+            {{ user_form.email }}
+          </div>
+          <div class="mb-3">
+            <label
+              for="{{ user_form.password.id_for_label }}"
+              class="form-label"
+              >{{ user_form.password.label }}</label
+            >
+            {{ user_form.password }}
+          </div>
+          <div class="mb-3">
+            <label
+              for="{{ user_form.user_type.id_for_label }}"
+              class="form-label"
+              >{{ user_form.user_type.label }}</label
+            >
+            {{ user_form.user_type }}
+          </div>
+          <div class="mb-3">
+            <label
+              for="{{ user_form.phone_number.id_for_label }}"
+              class="form-label"
+              >{{ user_form.phone_number.label }}</label
+            >
+            {{ user_form.phone_number }}
+          </div>
+          <div class="mb-3">
+            <label for="{{ user_form.address.id_for_label }}" class="form-label"
+              >{{ user_form.address.label }}</label
+            >
+            {{ user_form.address }}
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            Close
+          </button>
+          <button type="submit" class="btn btn-primary">Add Staff</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Staffs Table -->
+<div class="container">
+  <div class="col">
+    <table class="table table-striped table-hover table-bordered">
+      <tr>
+        <th scope="col">S.No</th>
+        <th scope="col">Username</th>
+        <th scope="col">User First Name</th>
+        <th scope="col">User Last Name</th>
+        <th scope="col">User Role</th>
+        <th scope="col">Email</th>
+        <th scope="col">Is Active</th>
+        <th scope="col">Actions</th>
+        <th scope="col">Change Password</th>
+        <!-- New column -->
+        <th scope="col">Edit Info</th>
+        <!-- New column -->
+      </tr>
+
+      {% for staff in staffs %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ staff.user.username }}</td>
+        <td>{{ staff.first_name }}</td>
+        <td>{{ staff.last_name }}</td>
+        <td>{{ staff.staff_type }}</td>
+        <td>{{ staff.email }}</td>
+        <td>{{ staff.is_active }}</td>
+        <td>
+          <form
+            method="post"
+            action="{% url 'delete_staff' staff.id %}"
+            onsubmit="return confirm('Are you sure you want to delete this staff?');"
+          >
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+          </form>
+        </td>
+
+        <td>
+          <!-- Button to trigger the password change modal -->
+          <button
+            type="button"
+            class="btn btn-warning btn-sm"
+            data-bs-toggle="modal"
+            data-bs-target="#changePasswordModal{{ staff.id }}"
+          >
+            Change Password
+          </button>
+        </td>
+        <td>
+          <form method="post" action="{% url 'update_staff' staff.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary btn-sm">Update</button>
+          </form>
+        </td>
+      </tr>
+
+      <!-- Modal for changing password -->
+      <div
+        class="modal fade"
+        id="changePasswordModal{{ staff.id }}"
+        tabindex="-1"
+        aria-labelledby="changePasswordModalLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <form method="POST" action="{% url 'change_password' user.id %}">
+              {% csrf_token %}
+              <div class="modal-header">
+                <h5 class="modal-title" id="changePasswordModalLabel">
+                  Change Password for {{ user.username }}
+                </h5>
+                <button
+                  type="button"
+                  class="btn-close"
+                  data-bs-dismiss="modal"
+                  aria-label="Close"
+                ></button>
+              </div>
+              <div class="modal-body">
+                <div class="mb-3">
+                  <label for="new_password" class="form-label"
+                    >New Password</label
+                  >
+                  <input
+                    type="password"
+                    name="new_password"
+                    class="form-control"
+                    required
+                  />
+                </div>
+                <div class="mb-3">
+                  <label for="confirm_password" class="form-label"
+                    >Confirm Password</label
+                  >
+                  <input
+                    type="password"
+                    name="confirm_password"
+                    class="form-control"
+                    required
+                  />
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  data-bs-dismiss="modal"
+                >
+                  Close
+                </button>
+                <button type="submit" class="btn btn-primary">
+                  Change Password
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+
+{% endblock %}

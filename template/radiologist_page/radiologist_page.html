@@ -1,0 +1,156 @@
+{% extends 'radiologist_page/radiologist_base.html' %} {% block content %}
+<div class="container-fluid">
+  <h6>Welcome, {{ request.user }}</h6>
+  
+  
+
+  <h4 class="mt-4 text-center">Imaging  Requests</h4>
+  </div>
+<!-- Regular Imaging Tests -->
+<div class="container mt-4">
+  <h5 class="text-danger fw-bold mb-3">
+    <i class="bi bi-person-lines-fill me-2"></i>Regular Patients
+  </h5>
+
+  <div class="table-responsive shadow-sm rounded-4">
+    <table class="table table-bordered align-middle mb-0">
+      <thead class="bg-primary text-white text-center">
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Patient Name</th>
+          <th scope="col">Service Name</th>
+          <th scope="col">Payment Status</th>
+          <th scope="col">Requested At</th>
+          <th scope="col">Completed At</th>
+          <th scope="col">Insert Result</th>
+        </tr>
+      </thead>
+
+      <tbody class="text-center">
+        {% for service in imaging_investigations %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td class="fw-semibold text-dark">
+            <i class="bi bi-person-badge text-info me-1"></i>{{ service.patient.full_name }}
+          </td>
+          <td class="fw-semibold text-dark">
+            <i class="bi bi-camera text-primary me-1"></i>{{ service.investigation_name }}
+          </td>
+
+          <!-- Payment Status -->
+          <td>
+            {% if service.payment_status == "Completed" %}
+              <span class="badge bg-success rounded-pill px-3 py-2">
+                <i class="bi bi-check-circle me-1"></i>Paid
+              </span>
+            {% else %}
+              <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                <i class="bi bi-exclamation-circle me-1"></i>Pending
+              </span>
+            {% endif %}
+          </td>
+
+          <td>{{ service.requested_at|date:"Y-m-d H:i" }}</td>
+          <td>
+            {% if service.recorded_at %}
+              {{ service.recorded_at|date:"Y-m-d H:i" }}
+            {% else %}
+              <span class="text-muted">Not Completed</span>
+            {% endif %}
+          </td>
+
+          <!-- Insert Result -->
+          <td>
+            {% if service.payment_status == "Pending" %}
+              <button class="btn btn-outline-danger btn-sm rounded-pill px-3" disabled>
+                <i class="bi bi-x-circle me-1"></i>Insert Result
+              </button>
+            {% else %}
+              <a href="{% url 'enter_imaging_investigation_results' service.patient.id service.investigation_name %}"
+                 class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                <i class="bi bi-pencil-square me-1"></i>Insert Result
+              </a>
+            {% endif %}
+          </td>
+
+          <!-- Watch Result -->
+          <td>
+            {% if service.recorded_at %}
+              <a href="{% url 'watch_imaging_investigation_results' service.patient.id service.investigation_name %}"
+                 class="btn btn-outline-info btn-sm rounded-pill px-3">
+                <i class="bi bi-eye me-1"></i>View Result
+              </a>
+            {% else %}
+              <span class="text-muted">Not Available</span>
+            {% endif %}
+          </td>
+        </tr>
+
+        {% empty %}
+        <tr>
+          <td colspan="8" class="text-center text-danger py-3">
+            <i class="bi bi-exclamation-triangle me-2"></i>No imaging requests found.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Walk-in Imaging Tests -->
+<div class="container mt-5">
+  <h5 class="text-danger fw-bold mb-3">
+    <i class="bi bi-person-walking me-2"></i>Walk-in Patients
+  </h5>
+
+  <div class="table-responsive shadow-sm rounded-4">
+    <table class="table table-bordered align-middle mb-0">
+      <thead class="bg-primary text-white text-center">
+        <tr>
+          <th>#</th>
+          <th>Patient Name</th>
+          <th>Service Name</th>
+          <th>Requested At</th>
+          <th>Enter Result</th>
+        </tr>
+      </thead>
+
+      <tbody class="text-center">
+        {% for service in walkin_imaging_investigations %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td class="fw-semibold text-dark">
+            <i class="bi bi-person-badge text-info me-1"></i>{{ service.walkin_patient }}
+          </td>
+          <td class="fw-semibold text-dark">
+            <i class="bi bi-camera text-primary me-1"></i>{{ service.investigation }}
+          </td>
+
+          <td>{{ service.time_created|date:"Y-m-d H:i" }}</td>
+
+          <!-- Enter Result -->
+          <td>
+            <a href="{% url 'enter_walkin_imaging_investigation_results' service.id%}"
+               class="btn btn-outline-primary btn-sm rounded-pill px-3">
+              <i class="bi bi-pencil-square me-1"></i>Enter Result
+            </a>
+          </td>
+
+
+        </tr>
+
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center text-danger py-3">
+            <i class="bi bi-exclamation-triangle me-2"></i>No walk-in imaging requests found.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+{% endblock %}

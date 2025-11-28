@@ -1,0 +1,27 @@
+{% extends 'admin_page/admin_base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h3>Update Price for: {{ service.name }}</h3>
+
+    <form method="POST" action="{% url 'update_service_price' service.id %}">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="id_name" class="form-label">Service Name</label>
+            <input type="text" class="form-control" id="id_name" value="{{ service.name }}" disabled>
+        </div>
+        <div class="mb-3">
+            <label for="id_category" class="form-label">Service Category</label>
+            <input type="text" class="form-control" id="id_category" value="{{ service.category }}" disabled>
+        </div>
+        <div class="mb-3">
+            <label for="id_price" class="form-label">Service Price</label>
+            {{ form.price }} <!-- This is the editable price field -->
+        </div>
+        <button type="submit" class="btn btn-success">Submit</button>
+        <a href="{% url 'services_management' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+
+    
+</div>
+{% endblock %}

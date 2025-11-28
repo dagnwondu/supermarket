@@ -1,0 +1,48 @@
+{% extends 'receptionist_page/receptionist_base.html' %} {% block content %}
+<div class="container mt-5">
+  <!-- Live-updated name display -->
+  <h4 class="text-center mb-4">
+    Injections for <span id="display_name">________</span>
+  </h4>
+
+  <h5 class="text-center mb-4 text-primary">Injection Price: {{ walkin_injection_price }}</h5>
+
+  <form
+    method="post"
+    action="{% url 'walkin_injection_submit' %}"
+    class="border p-4 rounded shadow-sm bg-light"
+  >
+    {% csrf_token %}
+
+    <div class="mb-3">
+      <input
+        type="text"
+        id="full_name_input"
+        name="full_name"
+        class="form-control"
+        placeholder="Enter patient's full name"
+        required
+      />
+    </div>
+
+    <div class="text-end">
+      <button
+        type="submit"
+        class="btn btn-success"
+        onclick="return confirm('💵 Please confirm: You have collected {{walkin_injection_price}}')"
+      >
+        💾 Save & Generate Payment
+      </button>
+    </div>
+  </form>
+</div>
+<!-- JS for live update -->
+<script>
+  const input = document.getElementById("full_name_input");
+  const display = document.getElementById("display_name");
+
+  input.addEventListener("input", () => {
+    display.textContent = input.value || "________";
+  });
+</script>
+{% endblock %}
