@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Supermarket Stock System</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f5f6fa;
+        }
+
+        /* -------------------------
+            CLEAN MODERN SIDEBAR
+        -------------------------- */
+
+        :root {
+            --sidebar-bg: #1e1f26;
+            --sidebar-hover: #2b2d35;
+            --sidebar-text: #d1d1d1;
+            --sidebar-active: #ffffff;
+        }
+
+        .sidebar {
+            width: 240px;
+            height: 100vh;
+            background: var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+
+        .sidebar .brand {
+            color: #fff;
+            font-size: 22px;
+            font-weight: 600;
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #2c2d33;
+        }
+
+        .sidebar a {
+            color: var(--sidebar-text);
+            text-decoration: none;
+            padding: 14px 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        .sidebar a:hover {
+            background: var(--sidebar-hover);
+            color: var(--sidebar-active);
+        }
+
+        .sidebar a.active {
+            background: var(--sidebar-hover);
+            color: var(--sidebar-active);
+            font-weight: 500;
+        }
+
+        .sidebar a i {
+            font-size: 18px;
+        }
+
+        /* -------------------------
+            MAIN CONTENT
+        -------------------------- */
+
+        .main-content {
+            margin-left: 240px;
+            padding: 30px;
+        }
+
+        .top-bar {
+            background: white;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+    </style>
+
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="brand">
+            <i class="bi bi-cart-check"></i> Market
+        </div>
+
+        <a href="/dashboard/" class="{% if request.path == '/dashboard/' %}active{% endif %}">
+            <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
+
+        <a href="/products/" class="{% if request.path == '/products/' %}active{% endif %}">
+            <i class="bi bi-box-seam"></i> Products
+        </a>
+
+        <a href="/add-product/" class="{% if request.path == '/add-product/' %}active{% endif %}">
+            <i class="bi bi-plus-circle"></i> Add Product
+        </a>
+
+        <a href="/sales/" class="{% if request.path == '/sales/' %}active{% endif %}">
+            <i class="bi bi-cart-fill"></i> Sales
+        </a>
+
+        <a href="/add-sale/" class="{% if request.path == '/add-sale/' %}active{% endif %}">
+            <i class="bi bi-bag-plus"></i> Add Sale
+        </a>
+
+        <a href="/accounts/logout/">
+            <i class="bi bi-box-arrow-right"></i> Logout
+        </a>
+    </div>
+
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="top-bar">
+            <h5 class="m-0">Welcome</h5>
+        </div>
+
+        <div>
+            {% block content %}
+            {% endblock %}
+        </div>
+    </div>
+
+</body>
+</html>

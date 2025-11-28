@@ -1,0 +1,29 @@
+{% extends 'cashier_base.html' %}
+
+{% block content %}
+
+<div class="row g-3">
+
+    <div class="col-md-4">
+        <div class="card card-simple p-3">
+            <h6>Total Products</h6>
+            <h3>{{ total_products }}</h3>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card card-simple p-3">
+            <h6>Today's Sales</h6>
+            <h3>{{ todays_sales }}</h3>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card card-simple p-3">
+            <h6>Low Stock Items</h6>
+            <h3>{{ low_stock_count }}</h3>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

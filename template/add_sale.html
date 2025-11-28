@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card card-simple p-4">
+    <h4>Register Sale</h4>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label>Select Product</label>
+            <select class="form-control" name="product_id" required>
+                {% for p in products %}
+                <option value="{{ p.id }}">{{ p.name }} ({{ p.quantity }} left)</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label>Quantity Sold</label>
+            <input type="number" class="form-control" name="qty_sold" required>
+        </div>
+
+        <button class="btn btn-success">Submit Sale</button>
+    </form>
+</div>
+{% endblock %}

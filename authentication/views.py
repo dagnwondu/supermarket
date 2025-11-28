@@ -63,7 +63,7 @@ def cashier_view(request):
     context={
     'user':user,
     }
-    return render(request, 'lab_technologist_page/lab_page.html', context)   
+    return render(request, 'cashier_page.html', context)   
 
 
 

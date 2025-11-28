@@ -136,5 +136,5 @@ TIME_ZONE = 'Africa/Addis_Ababa'  # For Ethiopia
 AUTH_USER_MODEL = 'authentication.CustomUser'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
-LOGIN_REDIRECT_URL = '/authentication/'
+LOGIN_REDIRECT_URL = '/'
 
