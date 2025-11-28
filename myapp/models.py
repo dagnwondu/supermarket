@@ -36,9 +36,6 @@ class Product(models.Model):
         return self.total_stock < 10  # example threshold
 
 
-# =========================
-# STOCK (purchase / inventory)
-# =========================
 class Stock(models.Model):
     product = models.ForeignKey(Product,related_name="batches", on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()

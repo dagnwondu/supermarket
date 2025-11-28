@@ -10,6 +10,13 @@ from django.http import JsonResponse
 from django.db import transaction
 from .models import Product, Stock, Sale, DailySummary
 from .forms import ProductForm, StockForm, SaleForm
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.db import transaction
+from .models import Product, Stock, Sale
+from django.db.models import Sum
+from django.db.models import Q
+from .models import Category, Product, Stock
 
 @login_required
 def dashboard(request):
@@ -63,7 +70,6 @@ def add_category(request):
 
     categories = Category.objects.all()
     return render(request, 'add_category.html', {'categories': categories})
-
 
 
 # @login_required
@@ -147,28 +153,6 @@ def expired_list(request):
     return render(request, 'expired.html', {'expired': expired, 'near_expiry': near_expiry})
 
 
-# @login_required
-# def product_search(request):
-#     query = request.GET.get('q', '')
-#     products = Product.objects.filter(
-#         name__icontains=query
-#     ) | Product.objects.filter(
-#         category__icontains=query
-#     )
-
-#     results = [
-#         {
-#             "id": p.id,
-#             "name": p.name,
-#             "category": p.category,
-#             "buying_price": float(p.buying_price),
-#             "selling_price": float(p.selling_price),
-#             "quantity": p.quantity,
-#             "expiry_date": p.expiry_date
-#         } for p in products
-#     ]
-#     return JsonResponse(results, safe=False)
-from django.db.models import Q
 
 def product_search(request):
     q = request.GET.get("q", "")
@@ -187,13 +171,10 @@ def product_search(request):
             "barcode": p.barcode,
             "category": p.category.name if p.category else "",
             "selling_price": p.selling_price,
+            "quantity": p.total_stock,
         })
 
     return JsonResponse(data, safe=False)
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import Category, Product, Stock
-from .forms import CategoryForm, ProductForm, StockForm
-from django.contrib import messages
 
 # ----------------------
 # Category Views
@@ -214,10 +195,6 @@ def add_product(request):
     else:
         form = ProductForm()
     return render(request, 'add_product.html', {'form': form})
-
-# ----------------------
-# Stock Views
-# ----------------------
 def add_stock(request):
     if request.method == 'POST':
         form = StockForm(request.POST)
@@ -248,7 +225,6 @@ def product_batches(request, product_id):
         'product': product,
         'batches': batches
     })
-
 def sales(request):
 
     sales = Sale.objects.select_related("product").order_by("-created_at")
@@ -289,29 +265,28 @@ def sales(request):
         "categories": Category.objects.all(),
         "values": request.GET
     })
-    
-def add_sale(request):
 
+def add_sale(request):
     if request.method == "POST":
-        product_id = request.POST.get("product")
+        product_id = request.POST.get("product_id")
         quantity = int(request.POST.get("quantity"))
 
         product = get_object_or_404(Product, id=product_id)
+        # total_available = product.stock_set.aggregate(total=Sum('quantity'))['total'] or 0
+        total_available = product.batches.aggregate(total=Sum('quantity'))['total'] or 0
 
-        # Check total availability
-        if quantity > product.total_stock:
-            messages.error(request, "Not enough stock available!")
-            return redirect("add_sale")
+        if quantity > total_available:
+            messages.error(request, "Quantity exceeds available stock!")
+            return redirect('add_sale')
 
-        # FIFO stock deduction
+        # Deduct stock using FIFO
         remaining = quantity
-        batches = Stock.objects.filter(product=product, quantity__gt=0).order_by("added_at")
+        batches = Stock.objects.filter(product=product, quantity__gt=0).order_by('added_at')
 
         with transaction.atomic():
             for batch in batches:
                 if remaining == 0:
                     break
-
                 if batch.quantity >= remaining:
                     batch.quantity -= remaining
                     batch.save()
@@ -321,16 +296,13 @@ def add_sale(request):
                     batch.quantity = 0
                     batch.save()
 
-            # Create sale record
-            sale = Sale.objects.create(
+            Sale.objects.create(
                 product=product,
                 quantity=quantity,
                 total_price=product.selling_price * quantity
             )
 
         messages.success(request, "Sale recorded successfully!")
-        return redirect("sales")
+        return redirect('add_sale')
 
-    products = Product.objects.all().order_by("name")
-
-    return render(request, "add_sale.html", {"products": products})
+    return render(request, "add_sale.html")

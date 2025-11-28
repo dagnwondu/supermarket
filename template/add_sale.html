@@ -1,38 +1,45 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="card card-simple p-4">
-    <h4>Add Sale</h4>
+<div class="card card-simple p-4" style="max-width: 600px; margin:auto;">
+    <h4 class="mb-4">Add Sale</h4>
     <form method="POST">
         {% csrf_token %}
 
-        <div class="mb-3">
-            <label>Product</label>
-            <input type="text" id="product_input" class="form-control" placeholder="Type product name or category" autocomplete="off" required>
+        <!-- Product Search -->
+        <div class="mb-3 position-relative">
+            <label for="product_input" class="form-label">Product</label>
+            <input type="text" id="product_input" class="form-control" placeholder="Type product name, barcode, or category" autocomplete="off" required>
             <input type="hidden" name="product_id" id="product_id">
+            <ul class="list-group" id="suggestions" style="position:absolute; z-index:1000; width:100%;"></ul>
         </div>
 
+        <!-- Available Quantity -->
         <div class="mb-3">
-            <label>Available Quantity</label>
+            <label for="available_qty" class="form-label">Available Quantity</label>
             <input type="number" id="available_qty" class="form-control" readonly>
         </div>
 
+        <!-- Price per Unit -->
         <div class="mb-3">
-            <label>Price</label>
-            <input type="number" step="0.01" name="price" id="price" class="form-control" readonly>
+            <label for="price" class="form-label">Price per Unit</label>
+            <input type="number" step="0.01" id="price" class="form-control" readonly>
         </div>
 
+        <!-- Quantity to Sell -->
         <div class="mb-3">
-            <label>Quantity to Sell</label>
-            <input type="number" name="quantity" id="quantity" class="form-control" required>
+            <label for="quantity" class="form-label">Quantity to Sell</label>
+            <input type="number" name="quantity" id="quantity" class="form-control" min="1" required>
         </div>
 
-        <button class="btn btn-primary"><i class="bi bi-bag-plus"></i> Add Sale</button>
+        <!-- Total Price -->
+        <div class="mb-3">
+            <label for="total_price" class="form-label">Total Price</label>
+            <input type="number" step="0.01" id="total_price" class="form-control" readonly>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-bag-plus"></i> Add Sale</button>
     </form>
-
-    <!-- Suggestions Dropdown -->
-    <ul class="list-group mt-1" id="suggestions" style="position:absolute; z-index:1000;"></ul>
-
 </div>
 
 <script>
@@ -41,31 +48,59 @@ const suggestions = document.getElementById('suggestions');
 const productId = document.getElementById('product_id');
 const priceField = document.getElementById('price');
 const availableQty = document.getElementById('available_qty');
+const quantityField = document.getElementById('quantity');
+const totalPriceField = document.getElementById('total_price');
+
+// Update total price when quantity changes
+quantityField.addEventListener('input', () => {
+    const qty = parseInt(quantityField.value) || 0;
+    const price = parseFloat(priceField.value) || 0;
+    totalPriceField.value = (qty * price).toFixed(2);
+});
 
 input.addEventListener('input', async () => {
-    const query = input.value;
-    if (query.length < 1) {
+    const query = input.value.trim();
+    if (!query) {
         suggestions.innerHTML = '';
         return;
     }
 
-const res = await fetch("{% url 'product_search' %}?q=" + query);
+    const res = await fetch("{% url 'product_search' %}?q=" + query);
     const data = await res.json();
 
     suggestions.innerHTML = '';
     data.forEach(item => {
         const li = document.createElement('li');
         li.classList.add('list-group-item', 'list-group-item-action');
-        li.textContent = `${item.name} | ${item.category} | ${item.quantity} in stock`;
+
+        li.innerHTML = `${item.name} | ${item.category} | ${item.quantity} in stock` +
+                       (item.low_stock ? ' <span class="badge bg-warning text-dark">Low Stock</span>' : '');
+
+        if (item.quantity === 0) {
+            li.classList.add('disabled');
+            li.style.opacity = 0.5;
+            li.style.pointerEvents = 'none';
+        }
+
         li.addEventListener('click', () => {
             input.value = item.name;
             productId.value = item.id;
             priceField.value = item.selling_price;
             availableQty.value = item.quantity;
+            quantityField.max = item.quantity;
+            totalPriceField.value = (item.selling_price * parseInt(quantityField.value || 1)).toFixed(2);
             suggestions.innerHTML = '';
         });
+
         suggestions.appendChild(li);
     });
+});
+
+// Hide suggestions when clicking outside
+document.addEventListener('click', (e) => {
+    if (!input.contains(e.target) && !suggestions.contains(e.target)) {
+        suggestions.innerHTML = '';
+    }
 });
 </script>
 {% endblock %}

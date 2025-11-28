@@ -12,7 +12,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from . models import CustomUser, Company
 from django.shortcuts import render,redirect, reverse
 from django.core.paginator import Paginator
-from myapp.models import Product
+from myapp.models import Product, Sale
 from . forms import UserForm, UserUpdateForm
 # Create your views here.
 # Identify users role and redirect to their view
@@ -54,17 +54,29 @@ def admin_view(request):
     }
     return render(request, 'admin_page/admin_page.html', context)   
 
+from django.db.models import Sum
+from django.utils.timezone import now
+today = now().date()
+
 
 
 # Cashier View
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_cashier)
 def cashier_view(request):
-    user = request.user
+    today_sales = Sale.objects.filter(created_at__date=today).aggregate(
+        total_quantity=Sum('quantity'),
+        total_revenue=Sum('total_price')
+    )
+
     products = Product.objects.all().count()
     context={
     'products':products,
+    'today_sales': today_sales['total_revenue'] or 0,
+
     }
+
+
     return render(request, 'cashier_page.html', context)   
 
 
