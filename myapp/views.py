@@ -338,25 +338,46 @@ from django.shortcuts import render
 from django.core.paginator import Paginator
 from django.db.models import Q, Sum
 from .models import Sale, SaleItem, Product, Category
+from django.shortcuts import render
+from django.core.paginator import Paginator
+from django.db.models import Sum, Prefetch
+from .models import Sale, SaleItem
 
 def sales(request):
-    # Filters
+    # GET filter values
+    search = request.GET.get('search', '').strip()
+    category = request.GET.get('category')
+    product_id = request.GET.get('product')
     date_from = request.GET.get('date_from')
     date_to = request.GET.get('date_to')
+    price_min = request.GET.get('price_min')
+    price_max = request.GET.get('price_max')
 
-    sales = Sale.objects.all().order_by('-created_at')
+    # Prefetch SaleItems with Product
+    sale_items_qs = SaleItem.objects.select_related('product')
+    sales = Sale.objects.prefetch_related(
+        Prefetch('items', queryset=sale_items_qs, to_attr='sale_items')
+    ).order_by('-created_at')
 
+    # FILTERS
+    if search:
+        sales = sales.filter(items__product__name__icontains=search).distinct()
+    if category:
+        sales = sales.filter(items__product__category_id=category).distinct()
+    if product_id:
+        sales = sales.filter(items__product_id=product_id).distinct()
     if date_from:
         sales = sales.filter(created_at__date__gte=date_from)
     if date_to:
         sales = sales.filter(created_at__date__lte=date_to)
 
-    # Compute total for display if needed
+    # Compute totals per sale for display
     for sale in sales:
-        sale.total_items = sale.items.aggregate(total_qty=Sum('quantity'))['total_qty'] or 0
-        sale.total_price = sale.items.aggregate(total_price=Sum('total_price'))['total_price'] or 0
+        sale.total_items = sum(item.quantity for item in sale.sale_items)
+        sale.total_price = sum(item.total_price for item in sale.sale_items)
+        sale.product_names = ", ".join([item.product.name for item in sale.sale_items])
 
-    # Pagination
+    # PAGINATION
     paginator = Paginator(sales, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -364,10 +385,11 @@ def sales(request):
     context = {
         'sales': page_obj,
         'page_obj': page_obj,
+        'categories': Category.objects.all(),
+        'products': Product.objects.all(),
         'values': request.GET,
     }
     return render(request, 'sales.html', context)
-
 def sale_detail(request, sale_id):
     sale = get_object_or_404(Sale, id=sale_id)
     sale_items = sale.items.select_related('product')
