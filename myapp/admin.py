@@ -4,7 +4,7 @@ from .models import Product, StockHistory, Sale, DailySummary
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'selling_price', 'quantity', 'expiry_date')
+    list_display = ('name', 'category', 'quantity', 'selling_price', 'buying_price', 'expiry_date', 'is_expired')
     list_filter = ('category', 'expiry_date')
     search_fields = ('name', 'barcode')
     ordering = ('name',)

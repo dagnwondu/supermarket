@@ -12,6 +12,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from . models import CustomUser, Company
 from django.shortcuts import render,redirect, reverse
 from django.core.paginator import Paginator
+from myapp.models import Product
 from . forms import UserForm, UserUpdateForm
 # Create your views here.
 # Identify users role and redirect to their view
@@ -60,8 +61,9 @@ def admin_view(request):
 @user_passes_test(is_cashier)
 def cashier_view(request):
     user = request.user
+    products = Product.objects.all().count()
     context={
-    'user':user,
+    'products':products,
     }
     return render(request, 'cashier_page.html', context)   
 

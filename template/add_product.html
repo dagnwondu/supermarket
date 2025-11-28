@@ -12,16 +12,31 @@
         </div>
 
         <div class="mb-3">
+            <label>Category</label>
+            <input type="text" class="form-control" name="category">
+        </div>
+
+        <div class="mb-3">
             <label>Quantity</label>
             <input type="number" class="form-control" name="quantity" required>
         </div>
 
         <div class="mb-3">
-            <label>Unit Price</label>
-            <input type="number" step="0.01" class="form-control" name="price" required>
+            <label>Buying Price</label>
+            <input type="number" step="0.01" class="form-control" name="buying_price" required>
         </div>
 
-        <button class="btn btn-primary">Save Product</button>
+        <div class="mb-3">
+            <label>Selling Price</label>
+            <input type="number" step="0.01" class="form-control" name="selling_price" required>
+        </div>
+
+        <div class="mb-3">
+            <label>Expiry Date</label>
+            <input type="date" class="form-control" name="expiry_date">
+        </div>
+
+        <button class="btn btn-primary"><i class="bi bi-save"></i> Save Product</button>
     </form>
 </div>
 {% endblock %}
