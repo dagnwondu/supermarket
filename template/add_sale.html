@@ -49,7 +49,7 @@ input.addEventListener('input', async () => {
         return;
     }
 
-    const res = await fetch(`/api/products/search/?q=${query}`);
+const res = await fetch("{% url 'product_search' %}?q=" + query);
     const data = await res.json();
 
     suggestions.innerHTML = '';

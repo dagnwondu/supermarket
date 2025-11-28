@@ -7,7 +7,7 @@ from django.core.paginator import Paginator
 # from django.contrib.auth.decorators import login_required
 # from django.shortcuts import render
 from django.http import JsonResponse
-
+from django.db import transaction
 from .models import Product, Stock, Sale, DailySummary
 from .forms import ProductForm, StockForm, SaleForm
 
@@ -147,27 +147,49 @@ def expired_list(request):
     return render(request, 'expired.html', {'expired': expired, 'near_expiry': near_expiry})
 
 
-@login_required
+# @login_required
+# def product_search(request):
+#     query = request.GET.get('q', '')
+#     products = Product.objects.filter(
+#         name__icontains=query
+#     ) | Product.objects.filter(
+#         category__icontains=query
+#     )
+
+#     results = [
+#         {
+#             "id": p.id,
+#             "name": p.name,
+#             "category": p.category,
+#             "buying_price": float(p.buying_price),
+#             "selling_price": float(p.selling_price),
+#             "quantity": p.quantity,
+#             "expiry_date": p.expiry_date
+#         } for p in products
+#     ]
+#     return JsonResponse(results, safe=False)
+from django.db.models import Q
+
 def product_search(request):
-    query = request.GET.get('q', '')
+    q = request.GET.get("q", "")
+
     products = Product.objects.filter(
-        name__icontains=query
-    ) | Product.objects.filter(
-        category__icontains=query
+        Q(name__icontains=q) |
+        Q(barcode__icontains=q) |
+        Q(category__name__icontains=q)
     )
 
-    results = [
-        {
+    data = []
+    for p in products:
+        data.append({
             "id": p.id,
             "name": p.name,
-            "category": p.category,
-            "buying_price": float(p.buying_price),
-            "selling_price": float(p.selling_price),
-            "quantity": p.quantity,
-            "expiry_date": p.expiry_date
-        } for p in products
-    ]
-    return JsonResponse(results, safe=False)
+            "barcode": p.barcode,
+            "category": p.category.name if p.category else "",
+            "selling_price": p.selling_price,
+        })
+
+    return JsonResponse(data, safe=False)
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Category, Product, Stock
 from .forms import CategoryForm, ProductForm, StockForm
@@ -226,3 +248,89 @@ def product_batches(request, product_id):
         'product': product,
         'batches': batches
     })
+
+def sales(request):
+
+    sales = Sale.objects.select_related("product").order_by("-created_at")
+
+    # --- Filters ---
+    search = request.GET.get("search")
+    product_id = request.GET.get("product")
+    category_id = request.GET.get("category")
+    date_from = request.GET.get("date_from")
+    date_to = request.GET.get("date_to")
+    price_min = request.GET.get("price_min")
+    price_max = request.GET.get("price_max")
+
+    if search:
+        sales = sales.filter(product__name__icontains=search)
+
+    if product_id:
+        sales = sales.filter(product_id=product_id)
+
+    if category_id:
+        sales = sales.filter(product__category_id=category_id)
+
+    if date_from:
+        sales = sales.filter(created_at__date__gte=date_from)
+
+    if date_to:
+        sales = sales.filter(created_at__date__lte=date_to)
+
+    if price_min:
+        sales = sales.filter(total_price__gte=price_min)
+
+    if price_max:
+        sales = sales.filter(total_price__lte=price_max)
+
+    return render(request, "sales.html", {
+        "sales": sales,
+        "products": Product.objects.all(),
+        "categories": Category.objects.all(),
+        "values": request.GET
+    })
+    
+def add_sale(request):
+
+    if request.method == "POST":
+        product_id = request.POST.get("product")
+        quantity = int(request.POST.get("quantity"))
+
+        product = get_object_or_404(Product, id=product_id)
+
+        # Check total availability
+        if quantity > product.total_stock:
+            messages.error(request, "Not enough stock available!")
+            return redirect("add_sale")
+
+        # FIFO stock deduction
+        remaining = quantity
+        batches = Stock.objects.filter(product=product, quantity__gt=0).order_by("added_at")
+
+        with transaction.atomic():
+            for batch in batches:
+                if remaining == 0:
+                    break
+
+                if batch.quantity >= remaining:
+                    batch.quantity -= remaining
+                    batch.save()
+                    remaining = 0
+                else:
+                    remaining -= batch.quantity
+                    batch.quantity = 0
+                    batch.save()
+
+            # Create sale record
+            sale = Sale.objects.create(
+                product=product,
+                quantity=quantity,
+                total_price=product.selling_price * quantity
+            )
+
+        messages.success(request, "Sale recorded successfully!")
+        return redirect("sales")
+
+    products = Product.objects.all().order_by("name")
+
+    return render(request, "add_sale.html", {"products": products})
