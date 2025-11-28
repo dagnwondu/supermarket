@@ -8,6 +8,6 @@ urlpatterns = [
     path('add-sale/', views.add_sale, name='add_sale'),
     path('sales/', views.sales_list, name='sales_list'),
     path('expired/', views.expired_list, name='expired_list'),
-    path('api/products/search/', views.product_search, name='product_search'),
+    path('products/search/', views.product_search, name='product_search'),
 
 ]
