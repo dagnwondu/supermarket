@@ -117,6 +117,7 @@
         <a href="/" class="{% if request.path == '/dashboard/' %}active{% endif %}">
             <i class="bi bi-speedometer2"></i> Dashboard
         </a>
+        
 
         <a href="{% url 'products' %}" class="{% if request.resolver_match.url_name == 'products' %}active{% endif %}">
     <i class="bi bi-box-seam"></i> Products</a>
@@ -125,6 +126,10 @@
         <a href="{% url 'add_product' %}" class="{% if request.path == '/add-product/' %}active{% endif %}">
             <i class="bi bi-plus-circle"></i> Add Product
         </a>
+        <a href="{% url 'add_category' %}" class="{% if request.resolver_match.url_name == 'add_category' %}active{% endif %}">
+    <i class="bi bi-tags"></i> Add Category
+</a>
+
 
         <a href="/sales/" class="{% if request.path == '/sales/' %}active{% endif %}">
             <i class="bi bi-cart-fill"></i> Sales
