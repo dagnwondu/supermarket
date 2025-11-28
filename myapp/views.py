@@ -44,21 +44,56 @@ def product_list(request):
 
     return render(request, 'products.html', {'page_obj': page_obj})
 
+# @login_required
+# def add_product(request):
+#     if request.method == 'POST':
+#         form = ProductForm(request.POST)
+#         if form.is_valid():
+#             p = form.save(commit=False)
+#             # quantity starts at 0 until stock added
+#             p.quantity = p.quantity or 0
+#             p.save()
+#             messages.success(request, 'Product registered successfully.')
+#             return redirect('products')
+#     else:
+#         form = ProductForm()
+#     return render(request, 'add_product.html', {'form': form})
 @login_required
 def add_product(request):
-    if request.method == 'POST':
-        form = ProductForm(request.POST)
-        if form.is_valid():
-            p = form.save(commit=False)
-            # quantity starts at 0 until stock added
-            p.quantity = p.quantity or 0
-            p.save()
-            messages.success(request, 'Product registered successfully.')
-            return redirect('products')
-    else:
-        form = ProductForm()
-    return render(request, 'add_product.html', {'form': form})
+    if request.method == "POST":
+        product_id = request.POST.get('product_id')
+        name = request.POST['name']
+        category = request.POST.get('category', '')
+        quantity_val = int(request.POST['quantity'])
+        buying_price_val = float(request.POST['buying_price'])
+        selling_price_val = float(request.POST['selling_price'])
+        expiry = request.POST.get('expiry_date') or None
 
+        if product_id:
+            # Update existing product
+            product = get_object_or_404(Product, id=product_id)
+            product.quantity += quantity_val  # add stock
+            product.buying_price = buying_price_val
+            product.selling_price = selling_price_val
+            product.category = category
+            product.expiry_date = expiry
+            product.save()
+            messages.success(request, f"Stock updated for {product.name}")
+        else:
+            # Create new product
+            Product.objects.create(
+                name=name,
+                category=category,
+                quantity=quantity_val,
+                buying_price=buying_price_val,
+                selling_price=selling_price_val,
+                expiry_date=expiry
+            )
+            messages.success(request, f"Product {name} added successfully")
+
+        return redirect('add_product')
+
+    return render(request, 'add_product.html')
 @login_required
 def add_stock(request):
     """

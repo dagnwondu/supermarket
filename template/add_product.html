@@ -2,50 +2,86 @@
 
 {% block content %}
 <div class="card card-simple p-4">
-    <h4>Add New Product</h4>
+    <h4>Add / Update Product</h4>
     <form method="POST">
         {% csrf_token %}
 
-        <!-- <div class="mb-3">
+        <div class="mb-3">
             <label>Product Name</label>
-            <input type="text" class="form-control" name="name" required>
-        </div> -->
-<div class="mb-3">
-    <label>Product</label>
-    <input list="products" class="form-control" name="product_name" id="product_input" required>
-    <datalist id="products">
-        {% for p in products %}
-        <option value="{{ p.name }} | {{ p.category }}">
-        {% endfor %}
-    </datalist>
-</div>
+            <input type="text" id="product_input" class="form-control" placeholder="Type product name" autocomplete="off" required>
+            <input type="hidden" name="product_id" id="product_id">
+        </div>
 
         <div class="mb-3">
             <label>Category</label>
-            <input type="text" class="form-control" name="category">
+            <input type="text" name="category" id="category" class="form-control">
         </div>
 
         <div class="mb-3">
             <label>Quantity</label>
-            <input type="number" class="form-control" name="quantity" required>
+            <input type="number" name="quantity" id="quantity" class="form-control" required>
         </div>
 
         <div class="mb-3">
             <label>Buying Price</label>
-            <input type="number" step="0.01" class="form-control" name="buying_price" required>
+            <input type="number" step="0.01" name="buying_price" id="buying_price" class="form-control" required>
         </div>
 
         <div class="mb-3">
             <label>Selling Price</label>
-            <input type="number" step="0.01" class="form-control" name="selling_price" required>
+            <input type="number" step="0.01" name="selling_price" id="selling_price" class="form-control" required>
         </div>
 
         <div class="mb-3">
             <label>Expiry Date</label>
-            <input type="date" class="form-control" name="expiry_date">
+            <input type="date" name="expiry_date" id="expiry_date" class="form-control">
         </div>
 
-        <button class="btn btn-primary"><i class="bi bi-save"></i> Save Product</button>
+        <button class="btn btn-primary"><i class="bi bi-plus-circle"></i> Save Product</button>
     </form>
+
+    <!-- Suggestions Dropdown -->
+    <ul class="list-group mt-1" id="suggestions" style="position:absolute; z-index:1000;"></ul>
+
 </div>
+
+<script>
+const input = document.getElementById('product_input');
+const suggestions = document.getElementById('suggestions');
+const productId = document.getElementById('product_id');
+const category = document.getElementById('category');
+const quantity = document.getElementById('quantity');
+const buyingPrice = document.getElementById('buying_price');
+const sellingPrice = document.getElementById('selling_price');
+const expiryDate = document.getElementById('expiry_date');
+
+input.addEventListener('input', async () => {
+    const query = input.value;
+    if (query.length < 1) {
+        suggestions.innerHTML = '';
+        return;
+    }
+
+    const res = await fetch(`/api/products/search/?q=${query}`);
+    const data = await res.json();
+
+    suggestions.innerHTML = '';
+    data.forEach(item => {
+        const li = document.createElement('li');
+        li.classList.add('list-group-item', 'list-group-item-action');
+        li.textContent = `${item.name} | ${item.category} | ${item.quantity} in stock`;
+        li.addEventListener('click', () => {
+            input.value = item.name;
+            productId.value = item.id;
+            category.value = item.category;
+            quantity.value = item.quantity;
+            buyingPrice.value = item.buying_price;
+            sellingPrice.value = item.selling_price;
+            expiryDate.value = item.expiry_date || '';
+            suggestions.innerHTML = '';
+        });
+        suggestions.appendChild(li);
+    });
+});
+</script>
 {% endblock %}
