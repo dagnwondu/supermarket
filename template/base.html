@@ -114,13 +114,14 @@
             <i class="bi bi-cart-check"></i> Moti Super Market
         </div>
 
-        <a href="/dashboard/" class="{% if request.path == '/dashboard/' %}active{% endif %}">
+        <a href="/" class="{% if request.path == '/dashboard/' %}active{% endif %}">
             <i class="bi bi-speedometer2"></i> Dashboard
         </a>
 
-        <a href="/products/" class="{% if request.path == '/products/' %}active{% endif %}">
-            <i class="bi bi-box-seam"></i> Products
-        </a>
+        <a href="{% url 'products' %}" class="{% if request.resolver_match.url_name == 'products' %}active{% endif %}">
+    <i class="bi bi-box-seam"></i> Products
+</a>
+
 
         <a href="/add-product/" class="{% if request.path == '/add-product/' %}active{% endif %}">
             <i class="bi bi-plus-circle"></i> Add Product
@@ -143,7 +144,7 @@
     <!-- Main Content -->
     <div class="main-content">
         <div class="top-bar">
-            <h5 class="m-0">Welcome {{request.user}}</h5>
+            <h5 class="m-0">Welcome {{get_ful_name}}</h5>
         </div>
 
         <div>
