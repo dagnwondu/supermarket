@@ -39,17 +39,39 @@ def dashboard(request):
     return render(request, 'dashboard.html', context)
 
 
+from django.shortcuts import render
+from django.core.paginator import Paginator
+from .models import Product, Category
+from django.db.models import Q
+from django.contrib.auth.decorators import login_required
+
 @login_required
 def product_list(request):
+    search = request.GET.get('search', '').strip()
+    category = request.GET.get('category')
+
     products = Product.objects.all().order_by('name')
 
-    # ----- PAGINATION -----
+    # Filtering
+    if search:
+        products = products.filter(Q(name__icontains=search) | Q(barcode__icontains=search))
+    if category:
+        products = products.filter(category_id=category)
+
+    # Pagination
     paginator = Paginator(products, 10)  # 10 products per page
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
-    # ------------------------
 
-    return render(request, 'products.html', {'page_obj': page_obj})
+    # Pass categories for filter dropdown
+    categories = Category.objects.all()
+
+    context = {
+        'page_obj': page_obj,
+        'categories': categories,
+        'values': request.GET,  # preserve filter values in template
+    }
+    return render(request, 'products.html', context)
 
 # from django.shortcuts import render, redirect
 # from .models import Category
