@@ -14,8 +14,14 @@
 
         <div class="mb-3">
             <label>Category</label>
-            <input type="text" name="category" id="category" class="form-control">
+            <select class="form-control" name="category" required>
+                <option value="">-- Select Category --</option>
+                {% for cat in categories %}
+                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                {% endfor %}
+            </select>
         </div>
+
 
         <div class="mb-3">
             <label>Quantity</label>

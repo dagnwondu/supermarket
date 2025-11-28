@@ -1,34 +1,27 @@
 from django.contrib import admin
-from .models import Product, StockHistory, Sale, DailySummary, Category
-
-
-@admin.register(Product)
-class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'selling_price', 'buying_price', 'expiry_date', 'is_expired')
-    list_filter = ('category', 'expiry_date')
-    search_fields = ('name', 'barcode')
-    ordering = ('name',)
+from .models import Category, Product, Stock, Sale, DailySummary
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('name', 'description')
     search_fields = ('name',)
-    ordering = ('name',)
-@admin.register(StockHistory)
-class StockHistoryAdmin(admin.ModelAdmin):
-    list_display = ('product', 'quantity_added', 'date_added', 'expiry_date')
-    list_filter = ('date_added', 'expiry_date')
-    search_fields = ('product__name',)
-    ordering = ('-date_added',)
 
+@admin.register(Product)
+class ProductAdmin(admin.ModelAdmin):
+    list_display = ('name', 'category', 'selling_price', 'total_stock')
+    list_filter = ('category',)
+    search_fields = ('name', 'barcode')
+
+@admin.register(Stock)
+class StockAdmin(admin.ModelAdmin):
+    list_display = ('product', 'quantity', 'buying_price', 'batch_number', 'expiry_date', 'added_at', 'is_expired')
+    list_filter = ('product', 'expiry_date')
+    search_fields = ('product__name', 'batch_number')
 
 @admin.register(Sale)
 class SaleAdmin(admin.ModelAdmin):
-    list_display = ('product', 'quantity_sold', 'price_each', 'total_price', 'date_sold')
-    list_filter = ('date_sold',)
-    search_fields = ('product__name',)
-    ordering = ('-date_sold',)
-
+    list_display = ('product', 'quantity', 'total_price', 'created_at')
+    list_filter = ('product', 'created_at')
 
 @admin.register(DailySummary)
 class DailySummaryAdmin(admin.ModelAdmin):
