@@ -136,17 +136,23 @@
         <a href="{% url 'add_sale' %}" class="{% if request.resolver_match.url_name == 'add_sale' %}active{% endif %}">
             <i class="bi bi-bag-plus"></i> Add Sale
         </a>
+        <a>
 
-        <a href="{% url 'logout' %}">
-            <i class="bi bi-box-arrow-right"></i> Logout
-        </a>
+            <form method="POST" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
+            </form>
+            </a>
+
     </div>
 
 
     <!-- Main Content -->
     <div class="main-content">
         <div class="top-bar">
-            <h5 class="m-0">Welcome {{get_ful_name}}</h5>
+            <h5 class="m-0">Welcome {{request.user.first_name}}</h5>
         </div>
 
         <div>

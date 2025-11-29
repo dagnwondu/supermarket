@@ -1,23 +1,13 @@
-# from django.shortcuts import render, redirect, get_object_or_404
-# from django.contrib import messages
-# from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from datetime import date, timedelta
-from django.core.paginator import Paginator
-# from django.contrib.auth.decorators import login_required
-# from django.shortcuts import render
 from django.http import JsonResponse
-from django.db import transaction
-from .models import Product, Stock, Sale, DailySummary
+from .models import Product, Stock, Sale, DailySummary, SaleItem,Category
 from .forms import ProductForm, StockForm, SaleForm
+from django.db.models import Sum, Prefetch, Q
+from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db import transaction
-from .models import Product, Stock, Sale
-from django.db.models import Sum
-from django.db.models import Q
-from .models import Category, Product, Stock
-
 @login_required
 def dashboard(request):
     total_products = Product.objects.count()
@@ -37,14 +27,6 @@ def dashboard(request):
         'expired_count': expired_total,
     }
     return render(request, 'dashboard.html', context)
-
-
-from django.shortcuts import render
-from django.core.paginator import Paginator
-from .models import Product, Category
-from django.db.models import Q
-from django.contrib.auth.decorators import login_required
-
 @login_required
 def product_list(request):
     search = request.GET.get('search', '').strip()
@@ -105,12 +87,6 @@ def product_list(request):
     }
 
     return render(request, 'products.html', context)
-
-# from django.shortcuts import render, redirect
-# from .models import Category
-# from django.contrib import messages
-# from django.contrib.auth.decorators import login_required
-
 @login_required
 def add_category(request):
     if request.method == "POST":
@@ -125,44 +101,6 @@ def add_category(request):
 
     categories = Category.objects.all()
     return render(request, 'add_category.html', {'categories': categories})
-
-
-# @login_required
-# def add_stock(request):
-#     """
-#     Add stock: creates Stock and increments Product.quantity
-#     """
-#     if request.method == 'POST':
-#         form = StockForm(request.POST)
-#         if form.is_valid():
-#             stock = form.save(commit=False)
-#             product = stock.product
-#             qty = stock.quantity_added
-#             # update product quantity
-#             product.quantity += qty
-#             # if expiry provided on stock batch, optionally set product expiry (business rule)
-#             # we do not overwrite product.expiry_date unless provided
-#             if stock.expiry_date:
-#                 product.expiry_date = stock.expiry_date
-#             product.save()
-#             stock.save()
-#             messages.success(request, f'Stock added: {product.name} +{qty}')
-#             return redirect('product_list')
-#     else:
-#         form = StockForm()
-#     return render(request, 'add_stock.html', {'form': form})
-
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.db import transaction
-from datetime import date
-from .models import Product, Sale, SaleItem, DailySummary
-
-
-
-
-
 @login_required
 def expired_list(request):
     today = date.today()
@@ -170,9 +108,6 @@ def expired_list(request):
     expired = Product.objects.filter(expiry_date__lt=today)
     near_expiry = Product.objects.filter(expiry_date__range=[today, near_expiry_limit])
     return render(request, 'expired.html', {'expired': expired, 'near_expiry': near_expiry})
-
-
-
 def product_search(request):
     q = request.GET.get("q", "")
 
@@ -194,15 +129,6 @@ def product_search(request):
         })
 
     return JsonResponse(data, safe=False)
-
-# ----------------------
-# Category Views
-# ----------------------
-
-
-# ----------------------
-# Product Views
-# ----------------------
 login_required
 def add_product(request):
     if request.method == 'POST':
@@ -267,7 +193,6 @@ def add_stock(request):
         messages.success(request, f"Stock added: {stock.quantity} units of {product.name}")
         return redirect('add_stock')
     return render(request, 'add_stock.html')
-
 def edit_product(request, product_id):
     product = get_object_or_404(Product, id=product_id)
 
@@ -288,15 +213,6 @@ def product_batches(request, product_id):
         'product': product,
         'batches': batches
     })
-
-
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.db import transaction
-from datetime import date
-from .models import Product, Sale, SaleItem, DailySummary
-
 @login_required
 def add_sale(request):
     """
@@ -389,15 +305,6 @@ def add_sale(request):
             return redirect('dashboard')
 
     return render(request, 'add_sale.html')
-from django.shortcuts import render
-from django.core.paginator import Paginator
-from django.db.models import Q, Sum
-from .models import Sale, SaleItem, Product, Category
-from django.shortcuts import render
-from django.core.paginator import Paginator
-from django.db.models import Sum, Prefetch
-from .models import Sale, SaleItem
-
 def sales(request):
     # GET filter values
     search = request.GET.get('search', '').strip()
