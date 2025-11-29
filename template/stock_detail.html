@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>stock detail</h1>
+{% if stock %}
+
+<div class="card card-simple p-4">
+    <h4>Near Expiry Stock Batches (Next 90 Days)</h4>
+
+    <table class="table table-striped table-bordered mt-3">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Buying Price</th>
+                <th>Batch Number</th>
+                <th>Expiry Date</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ stock.product.name }}</td>
+                <td>{{ stock.quantity }}</td>
+                <td>{{ stock.buying_price }}</td>
+                <td>{{ stock.product.selling_price }}</td>
+                <td>{{ stock.expiry_date }}</td>
+                <td>
+                    <a href="{% url 'delete_stock' stock.id %}" class="btn btn-danger btn-sm text-white"> Delete </a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <a href="{% url 'near_expiry_stocks' %}" class="btn btn-primary btn-md">Back To near_expiry_stocks</a>
+</div>
+
+{% endif %}
+{%endblock%}

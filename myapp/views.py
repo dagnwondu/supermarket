@@ -27,6 +27,9 @@ def dashboard(request):
         'expired_count': expired_total,
     }
     return render(request, 'dashboard.html', context)
+def login(request):
+    return redirect('accounts/login')
+
 @login_required
 def product_list(request):
     search = request.GET.get('search', '').strip()
@@ -215,13 +218,6 @@ def product_batches(request, product_id):
     })
 @login_required
 def add_sale(request):
-    """
-    Multi-item sale:
-    - Validate stock for each product
-    - Deduct stock using FIFO
-    - Create Sale and SaleItem entries
-    - Update daily summary
-    """
     if request.method == 'POST':
         product_ids = request.POST.getlist('product_id[]')
         quantities = request.POST.getlist('quantity[]')
@@ -302,7 +298,7 @@ def add_sale(request):
             ds.save()
 
             messages.success(request, f"Sale recorded successfully! Grand Total: {grand_total:.2f} Birr")
-            return redirect('dashboard')
+            return redirect('sales')
 
     return render(request, 'add_sale.html')
 def sales(request):
@@ -364,3 +360,33 @@ def sale_detail(request, sale_id):
         'grand_total': grand_total,
     }
     return render(request, 'sale_detail.html', context)
+@login_required
+def near_expiry_stocks(request):
+    threshold_date = date.today() + timedelta(days=90)
+
+    # Fetch all Stock batches expiring in the next 90 days
+    near_expiry_batches = Stock.objects.filter(
+        expiry_date__lte=threshold_date,
+        expiry_date__gte=date.today()
+    ).select_related('product').order_by('expiry_date')
+
+    context = {
+        'near_expiry_batches': near_expiry_batches,
+    }
+    return render(request, 'near_expiry_stocks.html', context)
+
+@login_required
+def stock_deatil(request, stock_id):
+    
+    stock = get_object_or_404(Stock, id = stock_id)
+    context = {
+        'stock': stock,
+    }
+    return render(request, 'stock_detail.html', context)
+@login_required
+def delete_stock(request, stock_id):
+    
+    stock = get_object_or_404(Stock, id = stock_id)
+    stock.delete()
+
+    return redirect('near_expiry_stocks')
