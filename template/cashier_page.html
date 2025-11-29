@@ -45,7 +45,16 @@
 </style>
 
 <div class="row g-4">
-
+{% if messages %}
+    <div class="mb-3">
+        {% for message in messages %}
+        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
     <!-- Total Products -->
     <div class="col-md-3">
         <a href="{% url 'products' %}" class="text-decoration-none text-dark">
