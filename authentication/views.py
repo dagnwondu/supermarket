@@ -12,12 +12,13 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from . models import CustomUser, Company
 from django.shortcuts import render,redirect, reverse
 from django.core.paginator import Paginator
-from myapp.models import Product, Sale, SaleItem
+from myapp.models import Product, Sale, SaleItem, Stock
 from . forms import UserForm, UserUpdateForm
+from datetime import date, timedelta
 
 from django.db.models import Sum
 from django.utils.timezone import now
-from django.shortcuts import render
+
 
 
 # Create your views here.
@@ -77,10 +78,19 @@ def cashier_view(request):
         total_quantity=Sum('quantity'),
         total_revenue=Sum('total_price')
     )
-
+    low_stock_count = sum(1 for p in Product.objects.all() if p.low_stock)
     products_count = Product.objects.all().count()
+    today = date.today()
+    near_expiry_limit = today + timedelta(days=90)
 
+    expired_count = Stock.objects.filter(expiry_date__lt=today).count()
+    near_expiry_count = Stock.objects.filter(expiry_date__range=[today, near_expiry_limit]).count()
+    near_expiry = Stock.objects.filter(expiry_date__range=[today, near_expiry_limit])
     context = {
+        "expired_count":expired_count,
+        'near_expiry':near_expiry,
+        'near_expiry_count':near_expiry_count,
+        "low_stock_count":low_stock_count,
         'products': products_count,
         'today_total_quantity': today_sales['total_quantity'] or 0,
         'today_sales_birr': today_sales['total_revenue'] or 0,

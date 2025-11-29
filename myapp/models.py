@@ -1,6 +1,7 @@
 from django.db import models
 from datetime import date
 from django.db.models import Sum
+from datetime import date, timedelta
 
 # =========================
 # CATEGORY
@@ -21,7 +22,8 @@ class Product(models.Model):
     name = models.CharField(max_length=200)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
     barcode = models.CharField(max_length=100, blank=True, null=True)
-    selling_price = models.DecimalField(max_digits=10, decimal_places=2)  # retail price
+    selling_price = models.DecimalField(max_digits=10, decimal_places=2)
+    low_stock_threshold = models.PositiveIntegerField(default=10)  # NEW FIELD
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -33,8 +35,8 @@ class Product(models.Model):
 
     @property
     def low_stock(self):
-        """Optional: flag for low stock if you want."""
-        return self.total_stock < 10  # example threshold
+        """Returns True if total stock is below threshold."""
+        return self.total_stock <= self.low_stock_threshold
 
 
 class Stock(models.Model):
@@ -47,12 +49,27 @@ class Stock(models.Model):
 
     def __str__(self):
         return f"{self.product.name} - {self.quantity} units"
+    @property
+    def total_stock(self):
+        return self.batches.aggregate(total=models.Sum('quantity'))['total'] or 0
 
-    def is_expired(self):
-        """Return True if this stock batch is expired."""
-        return self.expiry_date and self.expiry_date < date.today()
+    @property
+    def low_stock(self):
+        return self.total_stock <= self.low_stock_threshold
 
+    @property
+    def has_expired(self):
+        """Return True if any related batch is expired."""
+        # batches is the related_name from Stock/Batch foreign key
+        return any(getattr(batch, 'expiry_date', None) and batch.expiry_date < date.today()
+                   for batch in self.batches.all())
 
+    @property
+    def has_near_expiry(self):
+        """Return True if any related batch expires within next 90 days (including today)."""
+        warn_until = date.today() + timedelta(days=90)
+        return any(getattr(batch, 'expiry_date', None) and date.today() <= batch.expiry_date <= warn_until
+                   for batch in self.batches.all())
 # =========================
 # SALE (optional for customer sales)
 # =========================

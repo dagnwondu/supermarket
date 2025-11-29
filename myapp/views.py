@@ -49,28 +49,61 @@ from django.contrib.auth.decorators import login_required
 def product_list(request):
     search = request.GET.get('search', '').strip()
     category = request.GET.get('category')
+    filter_type = request.GET.get('filter')  # low_stock | near_expiry
 
     products = Product.objects.all().order_by('name')
 
-    # Filtering
+    # -------------------------------------
+    # SEARCH
+    # -------------------------------------
     if search:
-        products = products.filter(Q(name__icontains=search) | Q(barcode__icontains=search))
+        products = products.filter(
+            Q(name__icontains=search) |
+            Q(barcode__icontains=search)
+        )
+
+    # -------------------------------------
+    # CATEGORY FILTER
+    # -------------------------------------
     if category:
         products = products.filter(category_id=category)
 
-    # Pagination
-    paginator = Paginator(products, 10)  # 10 products per page
+    # -------------------------------------
+    # LOW STOCK FILTER
+    # -------------------------------------
+    if filter_type == "low_stock":
+        products = [p for p in products if p.low_stock]
+
+    # -------------------------------------
+    # NEAR EXPIRY FILTER (within 90 days)
+    # -------------------------------------
+    elif filter_type == "near_expiry":
+        threshold_date = date.today() + timedelta(days=90)
+
+        filtered = []
+        for product in products:
+            for batch in product.batches.all():
+                if batch.expiry_date and batch.expiry_date <= threshold_date:
+                    filtered.append(product)
+                    break
+        products = filtered
+
+    # -------------------------------------
+    # PAGINATION
+    # -------------------------------------
+    paginator = Paginator(products, 10)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
-    # Pass categories for filter dropdown
     categories = Category.objects.all()
 
     context = {
         'page_obj': page_obj,
         'categories': categories,
-        'values': request.GET,  # preserve filter values in template
+        'values': request.GET,
+        'filter': filter_type,
     }
+
     return render(request, 'products.html', context)
 
 # from django.shortcuts import render, redirect

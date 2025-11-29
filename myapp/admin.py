@@ -15,7 +15,7 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(Stock)
 class StockAdmin(admin.ModelAdmin):
-    list_display = ('product', 'quantity', 'buying_price', 'batch_number', 'expiry_date', 'added_at', 'is_expired')
+    list_display = ('product', 'quantity', 'buying_price', 'batch_number', 'expiry_date', 'added_at')
     list_filter = ('product', 'expiry_date')
     search_fields = ('product__name', 'batch_number')
 

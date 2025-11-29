@@ -2,7 +2,7 @@
 
 {% block content %}
 
-<div class="row g-4">
+<!-- <div class="row g-4">
 
     <div class="col-md-3">
         <div class="card card-simple p-4 shadow-sm" style="border-left: 6px solid #ff7f6b;">
@@ -14,7 +14,7 @@
     <div class="col-md-3">
         <div class="card card-simple p-4 shadow-sm" style="border-left: 6px solid #ff9e8c;">
             <h6 class="text-muted">Today's Sales</h6>
-            <h2 class="fw-bold text-dark">{{ today_sales }}</h2>
+            <h2 class="fw-bold text-dark">{{ today_sales|default:"0" }}</h2>
         </div>
     </div>
 
@@ -27,9 +27,67 @@
 
     <div class="col-md-3">
         <div class="card card-simple p-4 shadow-sm" style="border-left: 6px solid #ffb3a8;">
-            <h6 class="text-muted">Expired / Near Expiry</h6>
+            <h6 class="text-muted">Near Expiry</h6>
             <h2 class="fw-bold text-dark">{{ expired_count }}</h2>
         </div>
+    </div>
+
+</div> -->
+<style>
+    .dashboard-card {
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .dashboard-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+    }
+</style>
+
+<div class="row g-4">
+
+    <!-- Total Products -->
+    <div class="col-md-3">
+        <a href="{% url 'products' %}" class="text-decoration-none text-dark">
+            <div class="card card-simple p-4 shadow-sm dashboard-card"
+                 style="border-left: 6px solid #ff7f6b;">
+                <h6 class="text-muted">Total Products</h6>
+                <h2 class="fw-bold">{{ products }}</h2>
+            </div>
+        </a>
+    </div>
+
+    <!-- Today's Sales -->
+    <div class="col-md-3">
+        <a href="{% url 'sales' %}" class="text-decoration-none text-dark">
+            <div class="card card-simple p-4 shadow-sm dashboard-card"
+                 style="border-left: 6px solid #ff9e8c;">
+                <h6 class="text-muted">Today's Sales</h6>
+                <h2 class="fw-bold">{{ today_total_quantity }}</h2>
+            </div>
+        </a>
+    </div>
+
+    <!-- Low Stock -->
+    <div class="col-md-3">
+        <a href="{% url 'products' %}?filter=low_stock" class="text-decoration-none text-dark">
+            <div class="card card-simple p-4 shadow-sm dashboard-card"
+                 style="border-left: 6px solid #e36b59;">
+                <h6 class="text-muted">Low Stock Items</h6>
+                <h2 class="fw-bold">{{ low_stock_count }}</h2>
+            </div>
+        </a>
+    </div>
+
+    <!-- Near Expiry -->
+    <div class="col-md-3">
+        <a href="{% url 'products' %}?filter=near_expiry" class="text-decoration-none text-dark">
+            <div class="card card-simple p-4 shadow-sm dashboard-card"
+                 style="border-left: 6px solid #ffb3a8;">
+                <h6 class="text-muted">Near Expiry</h6>
+                <h2 class="fw-bold">{{ near_expiry_count }}</h2>
+            </div>
+        </a>
     </div>
 
 </div>
