@@ -1,15 +1,27 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="card card-simple p-4">
+<div class="card card-simple p-4" style="max-width: 600px; margin:auto;">
     <h4>Add Stock</h4>
+        <!-- Messages -->
+    {% if messages %}
+    <div class="mb-3">
+        {% for message in messages %}
+        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
     <form method="POST">
         {% csrf_token %}
 
-        <div class="mb-3">
+        <div class="mb-3 position-relative">
             <label>Product</label>
             <input type="text" id="product_input" class="form-control" placeholder="Type product name or category" autocomplete="off" required>
             <input type="hidden" name="product_id" id="product_id">
+            <ul class="list-group" id="suggestions" style="position:absolute; z-index:1000; width:100%;"></ul>
         </div>
 
         <div class="mb-3">
@@ -19,7 +31,7 @@
 
         <div class="mb-3">
             <label>Quantity to Add</label>
-            <input type="number" name="quantity" class="form-control" required>
+            <input type="number" name="quantity" class="form-control" min="1" required>
         </div>
 
         <div class="mb-3">
@@ -37,11 +49,8 @@
             <input type="date" name="expiry_date" id="expiry_date" class="form-control">
         </div>
 
-        <button class="btn btn-primary"><i class="bi bi-plus-circle"></i> Add Stock</button>
+        <button class="btn btn-primary w-100"><i class="bi bi-plus-circle"></i> Add Stock</button>
     </form>
-
-    <ul class="list-group mt-1" id="suggestions" style="position:absolute; z-index:1000;"></ul>
-
 </div>
 
 <script>
@@ -54,31 +63,41 @@ const sellingPrice = document.getElementById('selling_price');
 const expiryDate = document.getElementById('expiry_date');
 
 input.addEventListener('input', async () => {
-    const query = input.value;
-    if (query.length < 1) {
+    const query = input.value.trim();
+    if (!query) {
         suggestions.innerHTML = '';
         return;
     }
 
-    const res = await fetch(`/api/products/search/?q=${query}`);
+    const res = await fetch("{% url 'product_search' %}?q=" + query);
     const data = await res.json();
 
     suggestions.innerHTML = '';
     data.forEach(item => {
         const li = document.createElement('li');
         li.classList.add('list-group-item', 'list-group-item-action');
-        li.textContent = `${item.name} | ${item.category} | ${item.quantity} in stock`;
+        li.innerHTML = `
+            ${item.name} | ${item.category} | ${item.quantity} in stock
+            ${item.low_stock ? '<span class="badge bg-warning text-dark ms-2">Low Stock</span>' : ''}
+        `;
         li.addEventListener('click', () => {
             input.value = item.name;
             productId.value = item.id;
             currentQty.value = item.quantity;
-            buyingPrice.value = item.buying_price;
-            sellingPrice.value = item.selling_price;
+            sellingPrice.value = item.selling_price || '';
+            buyingPrice.value = item.buying_price || '';
             expiryDate.value = item.expiry_date || '';
             suggestions.innerHTML = '';
         });
         suggestions.appendChild(li);
     });
+});
+
+// Hide suggestions when clicking outside
+document.addEventListener('click', (e) => {
+    if (!input.contains(e.target) && !suggestions.contains(e.target)) {
+        suggestions.innerHTML = '';
+    }
 });
 </script>
 {% endblock %}

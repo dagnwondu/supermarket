@@ -2,48 +2,14 @@
 
 {% block content %}
 <div class="card card-simple p-4">
-    <h4>Add / Update Product</h4>
+    <h4>Add Product</h4>
     <form method="POST">
         {% csrf_token %}
-
-        <div class="mb-3">
-            <label>Product Name</label>
-            <input type="text" id="product_input" class="form-control" placeholder="Type product name" autocomplete="off" required>
-            <input type="hidden" name="product_id" id="product_id">
-        </div>
-
-        <div class="mb-3">
-            <label>Category</label>
-            <input type="text" name="category" id="category" class="form-control">
-        </div>
-
-        <div class="mb-3">
-            <label>Quantity</label>
-            <input type="number" name="quantity" id="quantity" class="form-control" required>
-        </div>
-
-        <div class="mb-3">
-            <label>Buying Price</label>
-            <input type="number" step="0.01" name="buying_price" id="buying_price" class="form-control" required>
-        </div>
-
-        <div class="mb-3">
-            <label>Selling Price</label>
-            <input type="number" step="0.01" name="selling_price" id="selling_price" class="form-control" required>
-        </div>
-
-        <div class="mb-3">
-            <label>Expiry Date</label>
-            <input type="date" name="expiry_date" id="expiry_date" class="form-control">
-        </div>
-
-        <button class="btn btn-primary"><i class="bi bi-plus-circle"></i> Save Product</button>
+        {{ form.as_p }}
+        <button class="btn btn-primary mt-2">Save Product</button>
     </form>
-
-    <!-- Suggestions Dropdown -->
-    <ul class="list-group mt-1" id="suggestions" style="position:absolute; z-index:1000;"></ul>
-
 </div>
+
 
 <script>
 const input = document.getElementById('product_input');

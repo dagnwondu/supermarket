@@ -14,7 +14,7 @@
     <div class="col-md-3">
         <div class="card card-simple p-4 shadow-sm" style="border-left: 6px solid #ff9e8c;">
             <h6 class="text-muted">Today's Sales</h6>
-            <h2 class="fw-bold text-dark">{{ todays_sales }}</h2>
+            <h2 class="fw-bold text-dark">{{ today_sales }}</h2>
         </div>
     </div>
 
@@ -40,7 +40,7 @@
 
     <!-- Add Stock -->
     <div class="col-md-6">
-        <a href="/add-product/" style="text-decoration:none;">
+        <a href="{% url 'add_stock' %}" style="text-decoration:none;">
             <div class="card p-4 shadow-sm text-center" style="border-radius: 14px; background: #fff5f3;">
                 <i class="bi bi-box-seam-fill" style="font-size: 40px; color:#ff7f6b;"></i>
                 <h4 class="mt-3 fw-bold" style="color:#ff7f6b;">Add Stock</h4>
@@ -51,7 +51,7 @@
 
     <!-- Add Sale -->
     <div class="col-md-6">
-        <a href="/add-sale/" style="text-decoration:none;">
+        <a href="{% url 'add_sale' %}" style="text-decoration:none;">
             <div class="card p-4 shadow-sm text-center" style="border-radius: 14px; background: #fff5f3;">
                 <i class="bi bi-cart-plus-fill" style="font-size: 40px; color:#e36b59;"></i>
                 <h4 class="mt-3 fw-bold" style="color:#e36b59;">Add Sale</h4>
