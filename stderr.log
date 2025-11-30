@@ -1,0 +1,18 @@
+Traceback (most recent call last):
+  File "/home/waysingtoncom/supermarket/passenger_wsgi.py", line 14, in <module>
+    from adama.wsgi import application
+ModuleNotFoundError: No module named 'adama'
+Traceback (most recent call last):
+  File "/home/waysingtoncom/supermarket/passenger_wsgi.py", line 14, in <module>
+    from adama.wsgi import application
+ModuleNotFoundError: No module named 'adama'
+[UID:2296][556293] Child process with pid: 556306 was killed by signal: 15, core dumped: no
+Traceback (most recent call last):
+  File "/home/waysingtoncom/supermarket/passenger_wsgi.py", line 14, in <module>
+    from adama.wsgi import application
+ModuleNotFoundError: No module named 'adama'
+Traceback (most recent call last):
+  File "/home/waysingtoncom/supermarket/passenger_wsgi.py", line 14, in <module>
+    from adama.wsgi import application
+ModuleNotFoundError: No module named 'adama'
+[UID:2296][559839] Child process with pid: 559855 was killed by signal: 15, core dumped: no

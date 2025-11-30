@@ -11,4 +11,4 @@
 #     version = 'Python %s\n' % sys.version.split()[0]
 #     response = '\n'.join([message, version])
 #     return [response.encode()]
-from adama.wsgi import application
+from myproject.wsgi import application
