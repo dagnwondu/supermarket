@@ -14,7 +14,7 @@
     </div>
     {% endif %}
     <!-- FILTERS -->
-    <form method="GET" class="row g-3 mt-3">
+    <form method="GET" class="row">
         <div class="col-md-3 position-relative">
             <label>Search Product</label>
             <input type="text" id="product_input" name="search" value="{{ values.search }}" class="form-control" autocomplete="off">
@@ -59,6 +59,9 @@
             <button class="btn btn-primary w-100">Filter</button>
         </div>
     </form>
+<div class="alert alert-info">
+    Grand Total: <strong>{{ grand_total_price }}</strong> ETB
+</div>
 
     <!-- SALES TABLE -->
     <table class="table table-bordered table-striped mt-3">

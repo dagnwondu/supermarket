@@ -311,7 +311,6 @@ def add_sale(request):
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_admin)
 def sales(request):
-    # GET filter values
     today = date.today()
     search = request.GET.get('search', '').strip()
     category = request.GET.get('category')
@@ -320,8 +319,8 @@ def sales(request):
     date_to = request.GET.get('date_to', today)
     sold_by = request.GET.get('sold_by')
 
-    # Prefetch SaleItems with Product
     sale_items_qs = SaleItem.objects.select_related('product')
+
     sales = Sale.objects.prefetch_related(
         Prefetch('items', queryset=sale_items_qs, to_attr='sale_items')
     ).order_by('-created_at')
@@ -340,16 +339,20 @@ def sales(request):
     if sold_by:
         sales = sales.filter(sold_by=sold_by)
 
-    # Compute totals per sale for display
+    # COMPUTE PER-SALE TOTALS
     for sale in sales:
         sale.total_items = sum(item.quantity for item in sale.sale_items)
         sale.total_price = sum(item.total_price for item in sale.sale_items)
-        sale.product_names = ", ".join([item.product.name for item in sale.sale_items])
+        sale.product_names = ", ".join(item.product.name for item in sale.sale_items)
+
+    # 🔥 AGGREGATE TOTAL
+    grand_total_price = sum(sale.total_price for sale in sales)
 
     # PAGINATION
     paginator = Paginator(sales, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+
     from authentication.models import CustomUser
     context = {
         'sales': page_obj,
@@ -357,9 +360,11 @@ def sales(request):
         'categories': Category.objects.all(),
         'products': Product.objects.all(),
         'values': request.GET,
-        'users':CustomUser.objects.all()
+        'users': CustomUser.objects.all(),
+        'grand_total_price': grand_total_price,   # ✅ Pass to template
     }
     return render(request, 'sales.html', context)
+
 def sale_detail(request, sale_id):
     sale = get_object_or_404(Sale, id=sale_id)
     sale_items = sale.items.select_related('product')
