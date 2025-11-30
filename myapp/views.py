@@ -466,7 +466,6 @@ def sales(request):
 def cashier_sales(request):
     current_user = request.user
     today = date.today()
-
     search = request.GET.get('search', '').strip()
     category = request.GET.get('category')
     product_id = request.GET.get('product')
