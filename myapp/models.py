@@ -26,7 +26,11 @@ class Product(models.Model):
     selling_price = models.DecimalField(max_digits=10, decimal_places=2)
     low_stock_threshold = models.PositiveIntegerField(default=10)  # NEW FIELD
     created_at = models.DateTimeField(auto_now_add=True)
-
+    # created_by = models.ForeignKey(
+    #     settings.AUTH_USER_MODEL,
+    #     on_delete=models.CASCADE,
+    #     related_name='products', null=True, blank=True
+    # )
     def __str__(self):
         return self.name
 
@@ -71,8 +75,6 @@ class Stock(models.Model):
         warn_until = date.today() + timedelta(days=90)
         return any(getattr(batch, 'expiry_date', None) and date.today() <= batch.expiry_date <= warn_until
                    for batch in self.batches.all())
-
-
 class DailySummary(models.Model):
     date = models.DateField(unique=True)
     total_sales = models.DecimalField(max_digits=12, decimal_places=2, default=0)
@@ -94,8 +96,6 @@ class Sale(models.Model):
     @property
     def total_quantity(self):
         return self.items.aggregate(total=Sum('quantity'))['total'] or 0
-
-
 class SaleItem(models.Model):
     sale = models.ForeignKey(Sale, related_name="items", on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)

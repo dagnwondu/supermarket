@@ -8,7 +8,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db import transaction
-from authentication.views import is_admin
+from authentication.views import is_admin, is_cashier
 from authentication.models import CustomUser
 from authentication.forms import UserForm, UserUpdateForm
 from django.urls import reverse
@@ -120,7 +120,6 @@ def expired_list(request):
     near_expiry = Product.objects.filter(expiry_date__range=[today, near_expiry_limit])
     return render(request, 'expired.html', {'expired': expired, 'near_expiry': near_expiry})
 @login_required(login_url='/accounts/login')
-@user_passes_test(is_admin)
 def product_search(request):
     q = request.GET.get("q", "")
 
@@ -157,10 +156,6 @@ def add_product(request):
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_admin)
 def add_stock(request):
-    """
-    Add new stock batch for a product.
-    Updates product selling price if changed.
-    """
     if request.method == 'POST':
         product_id = request.POST.get('product_id')
         quantity = request.POST.get('quantity')
@@ -233,6 +228,7 @@ def product_batches(request, product_id):
         'batches': batches
     })
 @login_required
+@user_passes_test(is_admin)
 def add_sale(request):
     if request.method == 'POST':
         product_ids = request.POST.getlist('product_id[]')
@@ -319,6 +315,96 @@ def add_sale(request):
             return redirect('sales')
 
     return render(request, 'add_sale.html')
+
+@login_required
+@user_passes_test(is_cashier)
+def cashier_add_sale(request):
+    if request.method == 'POST':
+        product_ids = request.POST.getlist('product_id[]')
+        quantities = request.POST.getlist('quantity[]')
+
+        if not product_ids or not quantities:
+            messages.error(request, "No products selected.")
+            return redirect('add_sale')
+
+        # Convert quantities to integers
+        try:
+            quantities = [int(q) for q in quantities]
+        except (ValueError, TypeError):
+            messages.error(request, "Invalid quantity entered.")
+            return redirect('add_sale')
+
+        # Validate stock for all selected products
+        products = Product.objects.filter(id__in=product_ids)
+        product_map = {str(p.id): p for p in products}
+        stock_errors = []
+
+        for pid, qty in zip(product_ids, quantities):
+            product = product_map.get(pid)
+            if not product:
+                stock_errors.append(f"Product with ID {pid} not found.")
+            elif qty <= 0:
+                stock_errors.append(f"Quantity for {product.name} must be at least 1.")
+            elif product.total_stock < qty:
+                stock_errors.append(f"Not enough stock for {product.name}. Available: {product.total_stock}")
+
+        if stock_errors:
+            messages.error(request, " | ".join(stock_errors))
+            return redirect('add_sale')
+
+        # All validations passed, save sale
+        with transaction.atomic():
+            sale = Sale.objects.create(total_price=0)
+            grand_total = 0
+
+            for pid, qty in zip(product_ids, quantities):
+                product = product_map[pid]
+
+                # Deduct stock using FIFO
+                remaining = qty
+                batches = product.batches.filter(quantity__gt=0).order_by('added_at')
+                for batch in batches:
+                    if remaining == 0:
+                        break
+                    if batch.quantity >= remaining:
+                        batch.quantity -= remaining
+                        batch.save()
+                        remaining = 0
+                    else:
+                        remaining -= batch.quantity
+                        batch.quantity = 0
+                        batch.save()
+
+                # Compute item total
+                total_price = qty * product.selling_price
+                grand_total += total_price
+
+                # Create SaleItem
+                SaleItem.objects.create(
+                    sale=sale,
+                    product=product,
+                    quantity=qty,
+                    selling_price=product.selling_price,
+                    total_price=total_price, 
+                )
+
+            # Update Sale grand total
+            sale.total_price = grand_total
+            sale.sold_by = request.user
+
+            sale.save()
+
+            # Update daily summary
+            ds, created = DailySummary.objects.get_or_create(date=date.today())
+            ds.total_sales += grand_total
+            ds.total_items_sold += sum(quantities)
+            ds.save()
+
+            messages.success(request, f"Sale recorded successfully! Grand Total: {grand_total:.2f} Birr")
+            return redirect('cashier_sales')
+
+    return render(request, 'cashier_page/add_sale.html')
+
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_admin)
 def sales(request):
@@ -375,6 +461,65 @@ def sales(request):
         'grand_total_price': grand_total_price,   # ✅ Pass to template
     }
     return render(request, 'sales.html', context)
+@login_required(login_url='/accounts/login')
+@user_passes_test(is_cashier)
+def cashier_sales(request):
+    current_user = request.user
+    today = date.today()
+
+    search = request.GET.get('search', '').strip()
+    category = request.GET.get('category')
+    product_id = request.GET.get('product')
+    date_from = request.GET.get('date_from', today)
+    date_to = request.GET.get('date_to', today)
+
+    sale_items_qs = SaleItem.objects.select_related('product')
+
+    # 🔥 Filter sales ONLY for current cashier
+    sales = (
+        Sale.objects
+        .filter(sold_by=current_user)
+        .prefetch_related(Prefetch('items', queryset=sale_items_qs, to_attr='sale_items'))
+        .order_by('-created_at')
+    )
+
+    # FILTERS
+    if search:
+        sales = sales.filter(items__product__name__icontains=search).distinct()
+    if category:
+        sales = sales.filter(items__product__category_id=category).distinct()
+    if product_id:
+        sales = sales.filter(items__product_id=product_id).distinct()
+    if date_from:
+        sales = sales.filter(created_at__date__gte=date_from)
+    if date_to:
+        sales = sales.filter(created_at__date__lte=date_to)
+
+    # COMPUTE PER-SALE TOTALS
+    for sale in sales:
+        sale.total_items = sum(item.quantity for item in sale.sale_items)
+        sale.total_price = sum(item.total_price for item in sale.sale_items)
+        sale.product_names = ", ".join(item.product.name for item in sale.sale_items)
+
+    # GRAND TOTAL
+    grand_total_price = sum(sale.total_price for sale in sales)
+
+    # PAGINATION
+    paginator = Paginator(sales, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'sales': page_obj,
+        'page_obj': page_obj,
+        'categories': Category.objects.all(),
+        'products': Product.objects.all(),
+        'values': request.GET,
+        'grand_total_price': grand_total_price,
+    }
+
+    return render(request, 'cashier_page/sales.html', context)
+
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_admin)
 def sale_detail(request, sale_id):

@@ -84,7 +84,7 @@ def admin_view(request):
 
     return render(request, 'admin_page.html', context)
 
-# Admin View
+# Cashier View
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_cashier)
 def cashier_view(request):
