@@ -15,7 +15,9 @@ from django.core.paginator import Paginator
 from myapp.models import Product, Sale, SaleItem, Stock
 from . forms import UserForm, UserUpdateForm
 from datetime import date, timedelta
-
+from django.db.models import Sum
+from django.utils.timezone import now
+today = now().date()
 from django.db.models import Sum
 from django.utils.timezone import now
 
@@ -32,8 +34,8 @@ def home(request):
         # Redirect based on user role
         if user_role == 'admin':
             return redirect('admin_view')
-        elif user_role == 'cashier':
-            return redirect('cashier_view')
+        elif user_role == 'admin':
+            return redirect('admin_view')
     except CustomUser.DoesNotExist:
         messages.error(request, 'User not found.')
         return redirect('/')
@@ -48,31 +50,15 @@ def loginPage(request):
 # Checking if the user is an admin
 def is_admin(user):
     return user.user_type == 'admin'
-def is_cashier(user):
-    return user.user_type == 'cashier'
+def is_admin(user):
+    return user.user_type == 'admin'
 
-# Admin view
+
+# Admin View
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_admin)
 def admin_view(request):
-    user=request.user
-    context = {
-        'user':user,
-    }
-    return render(request, 'admin_page/admin_page.html', context)   
-
-from django.db.models import Sum
-from django.utils.timezone import now
-today = now().date()
-
-
-
-# Cashier View
-@login_required(login_url='/accounts/login')
-@user_passes_test(is_cashier)
-def cashier_view(request):
     today = now().date()
-
     # Aggregate total quantity and total revenue from SaleItem
     today_sales = SaleItem.objects.filter(sale__created_at__date=today).aggregate(
         total_quantity=Sum('quantity'),
@@ -96,7 +82,7 @@ def cashier_view(request):
         'today_sales_birr': today_sales['total_revenue'] or 0,
     }
 
-    return render(request, 'cashier_page.html', context)
+    return render(request, 'admin_page.html', context)
 
 
 

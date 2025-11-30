@@ -1,4 +1,4 @@
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from datetime import date, timedelta
 from django.http import JsonResponse
 from .models import Product, Stock, Sale, DailySummary, SaleItem,Category
@@ -8,6 +8,11 @@ from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db import transaction
+from authentication.views import is_admin
+from authentication.models import CustomUser
+from authentication.forms import UserForm, UserUpdateForm
+from django.urls import reverse
+
 @login_required
 def dashboard(request):
     total_products = Product.objects.count()
@@ -284,11 +289,13 @@ def add_sale(request):
                     product=product,
                     quantity=qty,
                     selling_price=product.selling_price,
-                    total_price=total_price
+                    total_price=total_price, 
                 )
 
             # Update Sale grand total
             sale.total_price = grand_total
+            sale.sold_by = request.user
+
             sale.save()
 
             # Update daily summary
@@ -301,15 +308,17 @@ def add_sale(request):
             return redirect('sales')
 
     return render(request, 'add_sale.html')
+@login_required(login_url='/accounts/login')
+@user_passes_test(is_admin)
 def sales(request):
     # GET filter values
+    today = date.today()
     search = request.GET.get('search', '').strip()
     category = request.GET.get('category')
     product_id = request.GET.get('product')
-    date_from = request.GET.get('date_from')
-    date_to = request.GET.get('date_to')
-    price_min = request.GET.get('price_min')
-    price_max = request.GET.get('price_max')
+    date_from = request.GET.get('date_from', today)
+    date_to = request.GET.get('date_to', today)
+    sold_by = request.GET.get('sold_by')
 
     # Prefetch SaleItems with Product
     sale_items_qs = SaleItem.objects.select_related('product')
@@ -328,6 +337,8 @@ def sales(request):
         sales = sales.filter(created_at__date__gte=date_from)
     if date_to:
         sales = sales.filter(created_at__date__lte=date_to)
+    if sold_by:
+        sales = sales.filter(sold_by=sold_by)
 
     # Compute totals per sale for display
     for sale in sales:
@@ -339,13 +350,14 @@ def sales(request):
     paginator = Paginator(sales, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-
+    from authentication.models import CustomUser
     context = {
         'sales': page_obj,
         'page_obj': page_obj,
         'categories': Category.objects.all(),
         'products': Product.objects.all(),
         'values': request.GET,
+        'users':CustomUser.objects.all()
     }
     return render(request, 'sales.html', context)
 def sale_detail(request, sale_id):
@@ -388,5 +400,87 @@ def delete_stock(request, stock_id):
     
     stock = get_object_or_404(Stock, id = stock_id)
     stock.delete()
-
     return redirect('near_expiry_stocks')
+
+@login_required(login_url='/accounts/login')
+@user_passes_test(is_admin)
+def manage_users(request):
+    user = request.user
+    users = CustomUser.objects.all().exclude(is_superuser = True)
+    if request.method == 'POST':
+        form = UserUpdateForm(request.POST)
+        user_form = UserForm(request.POST)
+        if user_form.is_valid():
+            new_user = user_form.save(commit=False)
+            new_user.company = user.company 
+            new_user.set_password(user_form.cleaned_data['password'])
+            new_user.save()
+            messages.success(request, "User created successfully!")
+            return redirect('manage_users')
+        else:
+            messages.error(request, "Error while creating User")
+    else:
+        user_form = UserForm()
+        form = UserUpdateForm()
+    context = {
+        'user':user,
+        'form':form,
+        'users': users,
+        'user_form': user_form,
+    }
+    return render(request, 'manage_users.html', context)
+@login_required(login_url='/accounts/login')
+@user_passes_test(is_admin)
+def delete_user(request, user_id):
+    # Only allow deletion if the user exists
+    user = get_object_or_404(CustomUser, id=user_id)
+    # Prevent deletion of yourself
+    if request.user == user:
+        messages.error(request, "You cannot delete yourself.")
+        return redirect(reverse('manage_users'))  # Update 'manage_users' with your actual view name
+    # Delete the user
+    user.delete()
+    messages.success(request, "User deleted successfully.")
+    return redirect(reverse('manage_users'))  # Update 'manage_users' with your actual view name
+@login_required(login_url='/accounts/login')
+@user_passes_test(is_admin)
+def update_user(request, user_id):
+    user = get_object_or_404(CustomUser, id=user_id)
+    form = UserUpdateForm(instance=user)
+    return render(request, "update_user.html", {"form": form, "user": user})
+@login_required(login_url='/accounts/login')
+@user_passes_test(is_admin)
+def update_user_submit(request, user_id):
+    user = get_object_or_404(CustomUser, id=user_id)
+    form = UserUpdateForm(instance=user)
+
+    if request.method == "POST":
+        form = UserUpdateForm(request.POST, instance=user)
+        if form.is_valid():
+            original_user = CustomUser.objects.get(id=user_id)  # Keep original data
+            cleaned_data = form.cleaned_data  # Grab updated values
+
+            form.save()  # Save after logging changes
+
+            messages.success(request, f"User {user} updated successfully.")
+            return redirect(reverse('manage_users'))
+        else:
+            messages.error(request, "Please correct the errors below.")
+
+    return render(request, "manage_users.html", {"form": form, "user": user})
+@login_required(login_url='/accounts/login')
+@user_passes_test(is_admin)
+def change_password(request, user_id):
+    user = CustomUser.objects.get(id=user_id)
+    if request.method == "POST":
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+
+        if new_password == confirm_password:
+            user.set_password(new_password)
+            user.save()
+            messages.success(request, "Password changed successfully!")
+        else:
+            messages.error(request, "Passwords do not match.")
+
+    return redirect('manage_users')  # Adjust to your URL name

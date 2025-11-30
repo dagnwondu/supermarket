@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Login{% endblock %}</title>
+
+    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
+    <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+
+    <style>
+        /* Background image minimized (cover removed) */
+        body {
+            background-color: #fef2f2;;    /* fills empty space */
+        }
+
+        .login-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end; /* moves card to bottom */
+            padding-bottom: 50px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container login-wrapper">
+    {% block content %}{% endblock %}
+</div>
+
+</body>
+</html>

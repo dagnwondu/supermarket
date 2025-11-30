@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% if messages %}
+    <div class="mb-3">
+        {% for message in messages %}
+        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+<div class="card card-simple p-4">
+    <h4>Add Product</h4>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="btn btn-primary mt-2">Save Product</button>
+    </form>
+</div>
+
+
+<script>
+const input = document.getElementById('product_input');
+const suggestions = document.getElementById('suggestions');
+const productId = document.getElementById('product_id');
+const category = document.getElementById('category');
+const quantity = document.getElementById('quantity');
+const buyingPrice = document.getElementById('buying_price');
+const sellingPrice = document.getElementById('selling_price');
+const expiryDate = document.getElementById('expiry_date');
+
+input.addEventListener('input', async () => {
+    const query = input.value;
+    if (query.length < 1) {
+        suggestions.innerHTML = '';
+        return;
+    }
+    const res = await fetch("{% url 'product_search' %}?q=" + query);
+    const data = await res.json();
+
+    suggestions.innerHTML = '';
+    data.forEach(item => {
+        const li = document.createElement('li');
+        li.classList.add('list-group-item', 'list-group-item-action');
+        li.textContent = `${item.name} | ${item.category} | ${item.quantity} in stock`;
+        li.addEventListener('click', () => {
+            input.value = item.name;
+            productId.value = item.id;
+            category.value = item.category;
+            quantity.value = item.quantity;
+            buyingPrice.value = item.buying_price;
+            sellingPrice.value = item.selling_price;
+            expiryDate.value = item.expiry_date || '';
+            suggestions.innerHTML = '';
+        });
+        suggestions.appendChild(li);
+    });
+});
+</script>
+{% endblock %}

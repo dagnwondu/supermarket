@@ -2,6 +2,7 @@ from django.db import models
 from datetime import date
 from django.db.models import Sum
 from datetime import date, timedelta
+from django.conf import settings
 
 # =========================
 # CATEGORY
@@ -70,18 +71,6 @@ class Stock(models.Model):
         warn_until = date.today() + timedelta(days=90)
         return any(getattr(batch, 'expiry_date', None) and date.today() <= batch.expiry_date <= warn_until
                    for batch in self.batches.all())
-# =========================
-# SALE (optional for customer sales)
-# =========================
-# class Sale(models.Model):
-#     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-#     quantity = models.PositiveIntegerField()
-#     total_price = models.DecimalField(max_digits=10, decimal_places=2)  # selling_price * quantity
-#     created_at = models.DateTimeField(auto_now_add=True)
-
-#     def __str__(self):
-#         return f"Sale: {self.product.name} x {self.quantity}"
-
 
 
 class DailySummary(models.Model):
@@ -94,7 +83,11 @@ class DailySummary(models.Model):
 class Sale(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     total_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)  # total for all items
-
+    sold_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='sales', null=True, blank=True
+    )
     def __str__(self):
         return f"Sale #{self.id} - {self.created_at.date()}"
 

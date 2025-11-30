@@ -136,9 +136,6 @@
         <a href="{% url 'add_sale' %}" class="{% if request.resolver_match.url_name == 'add_sale' %}active{% endif %}">
             <i class="bi bi-bag-plus"></i> Add Sale
         </a>
-        <a href="{% url 'manage_users' %}" class="{% if request.resolver_match.url_name == 'manage_users' %}active{% endif %}">
-            <i class="bi bi-bag-plus"></i> Manage Users
-        </a>
             <a href="{% url 'password_change' %}">
             <i class="bi bi-key"></i> Change Password
         </a>
