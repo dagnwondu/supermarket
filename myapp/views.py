@@ -35,7 +35,8 @@ def dashboard(request):
 def login(request):
     return redirect('accounts/login')
 
-@login_required
+@login_required(login_url='/accounts/login')
+@user_passes_test(is_admin)
 def product_list(request):
     search = request.GET.get('search', '').strip()
     category = request.GET.get('category')
@@ -95,7 +96,8 @@ def product_list(request):
     }
 
     return render(request, 'products.html', context)
-@login_required
+@login_required(login_url='/accounts/login')
+@user_passes_test(is_admin)
 def add_category(request):
     if request.method == "POST":
         name = request.POST['name']
@@ -109,13 +111,16 @@ def add_category(request):
 
     categories = Category.objects.all()
     return render(request, 'add_category.html', {'categories': categories})
-@login_required
+@login_required(login_url='/accounts/login')
+@user_passes_test(is_admin)
 def expired_list(request):
     today = date.today()
     near_expiry_limit = today + timedelta(days=7)
     expired = Product.objects.filter(expiry_date__lt=today)
     near_expiry = Product.objects.filter(expiry_date__range=[today, near_expiry_limit])
     return render(request, 'expired.html', {'expired': expired, 'near_expiry': near_expiry})
+@login_required(login_url='/accounts/login')
+@user_passes_test(is_admin)
 def product_search(request):
     q = request.GET.get("q", "")
 
@@ -137,7 +142,8 @@ def product_search(request):
         })
 
     return JsonResponse(data, safe=False)
-login_required
+@login_required(login_url='/accounts/login')
+@user_passes_test(is_admin)
 def add_product(request):
     if request.method == 'POST':
         form = ProductForm(request.POST)
@@ -148,7 +154,8 @@ def add_product(request):
     else:
         form = ProductForm()
     return render(request, 'add_product.html', {'form': form})
-login_required
+@login_required(login_url='/accounts/login')
+@user_passes_test(is_admin)
 def add_stock(request):
     """
     Add new stock batch for a product.
@@ -201,6 +208,8 @@ def add_stock(request):
         messages.success(request, f"Stock added: {stock.quantity} units of {product.name}")
         return redirect('add_stock')
     return render(request, 'add_stock.html')
+@login_required(login_url='/accounts/login')
+@user_passes_test(is_admin)
 def edit_product(request, product_id):
     product = get_object_or_404(Product, id=product_id)
 
@@ -213,6 +222,8 @@ def edit_product(request, product_id):
         form = ProductForm(instance=product)
 
     return render(request, 'edit_product.html', {'form': form})
+@login_required(login_url='/accounts/login')
+@user_passes_test(is_admin)
 def product_batches(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     batches = Stock.objects.filter(product=product).order_by('-added_at')
@@ -364,7 +375,8 @@ def sales(request):
         'grand_total_price': grand_total_price,   # ✅ Pass to template
     }
     return render(request, 'sales.html', context)
-
+@login_required(login_url='/accounts/login')
+@user_passes_test(is_admin)
 def sale_detail(request, sale_id):
     sale = get_object_or_404(Sale, id=sale_id)
     sale_items = sale.items.select_related('product')
@@ -377,7 +389,8 @@ def sale_detail(request, sale_id):
         'grand_total': grand_total,
     }
     return render(request, 'sale_detail.html', context)
-@login_required
+@login_required(login_url='/accounts/login')
+@user_passes_test(is_admin)
 def near_expiry_stocks(request):
     threshold_date = date.today() + timedelta(days=90)
 
@@ -392,7 +405,8 @@ def near_expiry_stocks(request):
     }
     return render(request, 'near_expiry_stocks.html', context)
 
-@login_required
+@login_required(login_url='/accounts/login')
+@user_passes_test(is_admin)
 def stock_deatil(request, stock_id):
     
     stock = get_object_or_404(Stock, id = stock_id)
@@ -400,7 +414,8 @@ def stock_deatil(request, stock_id):
         'stock': stock,
     }
     return render(request, 'stock_detail.html', context)
-@login_required
+@login_required(login_url='/accounts/login')
+@user_passes_test(is_admin)
 def delete_stock(request, stock_id):
     
     stock = get_object_or_404(Stock, id = stock_id)

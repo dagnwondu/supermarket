@@ -19,10 +19,6 @@ class StockAdmin(admin.ModelAdmin):
     list_filter = ('product', 'expiry_date')
     search_fields = ('product__name', 'batch_number')
 
-# @admin.register(Sale)
-# class SaleAdmin(admin.ModelAdmin):
-#     list_display = ('product', 'quantity', 'total_price', 'created_at')
-#     list_filter = ('product', 'created_at')
 
 @admin.register(DailySummary)
 class DailySummaryAdmin(admin.ModelAdmin):
@@ -31,13 +27,11 @@ class DailySummaryAdmin(admin.ModelAdmin):
 class SaleItemInline(admin.TabularInline):
     model = SaleItem
     extra = 1
-    readonly_fields = ('total_price',)
     autocomplete_fields = ['product']
 
 @admin.register(Sale)
 class SaleAdmin(admin.ModelAdmin):
     list_display = ('id', 'created_at', 'total_price', 'total_quantity')
-    readonly_fields = ('total_price',)
     inlines = [SaleItemInline]
 
     def total_quantity(self, obj):
