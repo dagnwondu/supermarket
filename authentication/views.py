@@ -89,8 +89,9 @@ def admin_view(request):
 @user_passes_test(is_cashier)
 def cashier_view(request):
     today = now().date()
+    current_user = request.user
     # Aggregate total quantity and total revenue from SaleItem
-    today_sales = SaleItem.objects.filter(sale__created_at__date=today).aggregate(
+    today_sales = SaleItem.objects.filter(sale__created_at__date=today, sale__sold_by = current_user).aggregate(
         total_quantity=Sum('quantity'),
         total_revenue=Sum('total_price')
     )

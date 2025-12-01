@@ -315,7 +315,7 @@ def add_sale(request):
             return redirect('sales')
 
     return render(request, 'add_sale.html')
-
+# Cashier View
 @login_required
 @user_passes_test(is_cashier)
 def cashier_add_sale(request):
@@ -461,6 +461,8 @@ def sales(request):
         'grand_total_price': grand_total_price,   # ✅ Pass to template
     }
     return render(request, 'sales.html', context)
+
+
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_cashier)
 def cashier_sales(request):
@@ -518,16 +520,32 @@ def cashier_sales(request):
     }
 
     return render(request, 'cashier_page/sales.html', context)
+@login_required(login_url='/accounts/login')
+@user_passes_test(is_cashier)
+def cashier_sales_detail(request, sale_id):
+    current_user = request.user
+    sale = get_object_or_404(Sale, id=sale_id, sold_by=current_user)
+    items = SaleItem.objects.filter(sale=sale)  # all products in this sale
+    grand_total = items.aggregate(total=Sum('total_price'))['total'] or 0
 
+    sold_by = sale.sold_by.get_full_name()
+    context = {
+        'grand_total':grand_total,
+        'cashier':sold_by,
+        "sale": sale,
+        "items": items,
+    }
+    return render(request, "cashier_page/sales_detail.html", context)
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_admin)
 def sale_detail(request, sale_id):
     sale = get_object_or_404(Sale, id=sale_id)
     sale_items = sale.items.select_related('product')
-
     grand_total = sale_items.aggregate(total=Sum('total_price'))['total'] or 0
-
+    sold_by = sale.sold_by.get_full_name()
+    
     context = {
+        'cashier':sold_by,
         'sale': sale,
         'sale_items': sale_items,
         'grand_total': grand_total,

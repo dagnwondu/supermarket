@@ -28,6 +28,6 @@ class CustomUser(AbstractUser):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
 
     def get_full_name(self):
-        return f"{self.first_name} {self.last_name}"
+        return f"{self.first_name} {self.middle_name}"
 
 

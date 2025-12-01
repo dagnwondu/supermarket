@@ -60,6 +60,7 @@
                 <th>Total Items</th>
                 <th>Total Price (Birr)</th>
                 <th>Date</th>
+                <th>Deatil</th>
             </tr>
         </thead>
         <tbody>
@@ -70,6 +71,10 @@
                 <td>{{ sale.total_items }}</td>
                 <td>{{ sale.total_price|floatformat:2 }}</td>
                 <td>{{ sale.created_at|date:"Y-m-d H:i" }}</td>
+                <td>
+                <a href="{% url 'cashier_sales_detail' sale.id %}" class="btn btn-secondary">Detail</a>
+
+                </td>
                 
             </tr>
             {% empty %}
