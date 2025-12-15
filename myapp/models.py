@@ -3,11 +3,12 @@ from datetime import date
 from django.db.models import Sum
 from datetime import date, timedelta
 from django.conf import settings
-
+from authentication.models import Company
 # =========================
 # CATEGORY
 # =========================
 class Category(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, null=True, blank=True)
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True, null=True)
 
@@ -20,6 +21,7 @@ class Category(models.Model):
 # =========================
 
 class Product(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, null=True, blank=True)
     name = models.CharField(max_length=200)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
     barcode = models.CharField(max_length=100, blank=True, null=True)
@@ -42,9 +44,8 @@ class Product(models.Model):
     def low_stock(self):
         """Returns True if total stock is below threshold."""
         return self.total_stock <= self.low_stock_threshold
-
-
 class Stock(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, null=True, blank=True)
     product = models.ForeignKey(Product,related_name="batches", on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     buying_price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -76,6 +77,7 @@ class Stock(models.Model):
         return any(getattr(batch, 'expiry_date', None) and date.today() <= batch.expiry_date <= warn_until
                    for batch in self.batches.all())
 class DailySummary(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, null=True, blank=True)
     date = models.DateField(unique=True)
     total_sales = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     total_items_sold = models.IntegerField(default=0)
@@ -83,6 +85,7 @@ class DailySummary(models.Model):
     def __str__(self):
         return f"Summary - {self.date}"
 class Sale(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     total_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)  # total for all items
     sold_by = models.ForeignKey(
@@ -97,6 +100,7 @@ class Sale(models.Model):
     def total_quantity(self):
         return self.items.aggregate(total=Sum('quantity'))['total'] or 0
 class SaleItem(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, null=True, blank=True)
     sale = models.ForeignKey(Sale, related_name="items", on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()

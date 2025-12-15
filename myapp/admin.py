@@ -4,25 +4,25 @@ from django.db.models import Sum
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'description')
+    list_display = ('name', 'company', 'description')
     search_fields = ('name',)
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'selling_price', 'total_stock')
+    list_display = ('name', 'category','company', 'selling_price', 'total_stock')
     list_filter = ('category',)
     search_fields = ('name', 'barcode')
 
 @admin.register(Stock)
 class StockAdmin(admin.ModelAdmin):
-    list_display = ('product', 'quantity', 'buying_price', 'batch_number', 'expiry_date', 'added_at')
+    list_display = ('product', 'company','quantity', 'buying_price', 'batch_number', 'expiry_date', 'added_at')
     list_filter = ('product', 'expiry_date')
     search_fields = ('product__name', 'batch_number')
 
 
 @admin.register(DailySummary)
 class DailySummaryAdmin(admin.ModelAdmin):
-    list_display = ('date', 'total_sales', 'total_items_sold')
+    list_display = ('date', 'company','total_sales', 'total_items_sold')
     ordering = ('-date',)
 class SaleItemInline(admin.TabularInline):
     model = SaleItem
@@ -31,7 +31,7 @@ class SaleItemInline(admin.TabularInline):
 
 @admin.register(Sale)
 class SaleAdmin(admin.ModelAdmin):
-    list_display = ('id', 'created_at', 'total_price', 'total_quantity')
+    list_display = ('id', 'company','created_at', 'total_price', 'total_quantity')
     inlines = [SaleItemInline]
 
     def total_quantity(self, obj):
