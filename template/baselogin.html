@@ -1,40 +1,45 @@
 <!DOCTYPE html>
-{% load static %}
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <title>{% block title %}Login{% endblock %}</title>
 
-    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
-    <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <!-- Bootstrap CSS (CDN) -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    >
+
+    <!-- Bootstrap JS Bundle (CDN) -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+      defer
+    ></script>
 
     <style>
         body {
             background-color: #fef2f2;
             min-height: 100vh;
-        }
+            margin: 0;
 
-        .login-wrapper {
+            /* CENTER EVERYTHING */
             display: flex;
             justify-content: center;
-            align-items: center;     /* CENTER on mobile */
-            min-height: 100vh;
-            padding: 16px;
+            align-items: center;
         }
 
-        /* Desktop-only behavior */
-        @media (min-width: 768px) {
-            .login-wrapper {
-                align-items: flex-end;
-                padding-bottom: 50px;
-            }
+        .auth-wrapper {
+            width: 100%;
+            max-width: 420px;
+            padding: 16px;
         }
     </style>
 </head>
 <body>
 
-<div class="container login-wrapper">
+<div class="auth-wrapper">
     {% block content %}{% endblock %}
 </div>
 

@@ -4,96 +4,74 @@
 {% block content %}
 
 <style>
-  /* --- Logo Section --- */
-  .logo-container {
-    text-align: center;
-    margin-bottom: 16px;
-    padding: 0 12px;
-  }
-
-  .logo-title {
-    font-size: 28px;
-    font-weight: 700;
-    color: coral;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    line-height: 1.3;
-  }
-
-  .zoom-animate {
-    animation: zoomInOut 3s ease-in-out infinite;
-  }
-
-  @keyframes zoomInOut {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-  }
-
-  /* --- Card Styling --- */
-  .login-card {
-    border-radius: 1rem;
-    max-width: 360px;
-    width: 100%;
-    margin: 0 12px;
-  }
-
-  .login-btn {
-    background-color: coral;
-    border: none;
-    padding: 10px;
-    font-size: 16px;
-    transition: 0.3s;
-  }
-
-  .login-btn:hover {
-    background-color: #e26a54;
-  }
-
-  /* --- Form inputs --- */
-  input, select {
-    font-size: 15px !important;
-    padding: 10px !important;
-  }
-
-  /* --- Mobile adjustments --- */
-  @media (max-width: 576px) {
-    .logo-title {
-      font-size: 20px;
-      letter-spacing: 0.5px;
+    .brand {
+        text-align: center;
+        margin-bottom: 20px;
     }
 
-    .card-body {
-      padding: 1.2rem !important;
+    .brand h1 {
+        font-size: 26px;
+        font-weight: 700;
+        color: coral;
+        text-transform: uppercase;
+        line-height: 1.3;
+        animation: pulse 3s ease-in-out infinite;
     }
-  }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    .auth-card {
+        border-radius: 1rem;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    }
+
+    .auth-card .form-control {
+        font-size: 15px;
+        padding: 10px;
+    }
+
+    .btn-auth {
+        background-color: coral;
+        border: none;
+        font-size: 16px;
+        padding: 10px;
+    }
+
+    .btn-auth:hover {
+        background-color: #e26a54;
+    }
+
+    @media (max-width: 576px) {
+        .brand h1 {
+            font-size: 20px;
+        }
+    }
 </style>
 
-<div class="container-fluid d-flex flex-column justify-content-center align-items-center min-vh-100">
+<div class="brand">
+    <h1>
+        Waysington Supermarket<br>
+        Stock Management System
+    </h1>
+</div>
 
-  <!-- Logo Section -->
-  <div class="logo-container">
-    <div class="logo-title zoom-animate">
-      Waysington Supermarket <br> Stock Management System
-    </div>
-  </div>
+<div class="card auth-card">
+    <div class="card-body p-4">
 
-  <!-- Login Card -->
-  <div class="card shadow login-card">
-    <div class="card-body text-center">
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
 
-      <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-
-        <button class="btn login-btn text-white w-100 mt-3" type="submit">
-          Sign In
-        </button>
-      </form>
+            <button type="submit" class="btn btn-auth text-white w-100 mt-3">
+                Sign In
+            </button>
+        </form>
 
     </div>
-  </div>
-
 </div>
 
 {% endblock %}
