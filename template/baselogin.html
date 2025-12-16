@@ -3,22 +3,32 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Login{% endblock %}</title>
 
     <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
     <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 
     <style>
-        /* Background image minimized (cover removed) */
         body {
-            background-color: #fef2f2;;    /* fills empty space */
+            background-color: #fef2f2;
+            min-height: 100vh;
         }
 
         .login-wrapper {
             display: flex;
             justify-content: center;
-            align-items: flex-end; /* moves card to bottom */
-            padding-bottom: 50px;
+            align-items: center;     /* CENTER on mobile */
+            min-height: 100vh;
+            padding: 16px;
+        }
+
+        /* Desktop-only behavior */
+        @media (min-width: 768px) {
+            .login-wrapper {
+                align-items: flex-end;
+                padding-bottom: 50px;
+            }
         }
     </style>
 </head>

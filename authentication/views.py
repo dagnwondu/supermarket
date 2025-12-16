@@ -1,25 +1,13 @@
-from django.shortcuts import render, redirect,get_object_or_404
-from django.http import JsonResponse
-from django.template.loader import render_to_string
-from datetime import date
-from django.views.generic import ListView
-from django.contrib.auth import logout
-from django.shortcuts import redirect
+from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.urls import reverse
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth.mixins import LoginRequiredMixin
-from . models import CustomUser, Company
+from . models import CustomUser
 from django.shortcuts import render,redirect, reverse
-from django.core.paginator import Paginator
-from myapp.models import Product, Sale, SaleItem, Stock
-from . forms import UserForm, UserUpdateForm
+from myapp.models import Product,  SaleItem, Stock
 from datetime import date, timedelta
 from django.db.models import Sum
 from django.utils.timezone import now
 today = now().date()
-from django.db.models import Sum
-from django.utils.timezone import now
 
 
 
@@ -52,8 +40,6 @@ def is_admin(user):
     return user.user_type == 'admin'
 def is_cashier(user):
     return user.user_type == 'cashier'
-
-
 # Admin View
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_admin)
@@ -99,11 +85,12 @@ def cashier_view(request):
     products_count = Product.objects.all().count()
     today = date.today()
     near_expiry_limit = today + timedelta(days=90)
-
+    company_name = current_user.company.company_name
     expired_count = Stock.objects.filter(expiry_date__lt=today).count()
     near_expiry_count = Stock.objects.filter(expiry_date__range=[today, near_expiry_limit]).count()
     near_expiry = Stock.objects.filter(expiry_date__range=[today, near_expiry_limit])
     context = {
+        'company_name':company_name,
         "expired_count":expired_count,
         'near_expiry':near_expiry,
         'near_expiry_count':near_expiry_count,
