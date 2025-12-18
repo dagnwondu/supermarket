@@ -44,6 +44,9 @@ def is_cashier(user):
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_admin)
 def admin_view(request):
+    current_user = request.user
+    company_name = current_user.company.company_name
+
     today = now().date()
     # Aggregate total quantity and total revenue from SaleItem
     today_sales = SaleItem.objects.filter(sale__created_at__date=today).aggregate(
@@ -59,6 +62,7 @@ def admin_view(request):
     near_expiry_count = Stock.objects.filter(expiry_date__range=[today, near_expiry_limit]).count()
     near_expiry = Stock.objects.filter(expiry_date__range=[today, near_expiry_limit])
     context = {
+        "company_name":company_name,
         "expired_count":expired_count,
         'near_expiry':near_expiry,
         'near_expiry_count':near_expiry_count,
