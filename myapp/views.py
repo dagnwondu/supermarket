@@ -15,14 +15,17 @@ from django.urls import reverse
 
 @login_required
 def dashboard(request):
+    current_user = request.user
+    company_name = current_user.company.company_name
+    company = current_user.company
     total_products = Product.objects.count()
     today = date.today()
-    todays_sales = Sale.objects.filter(created_at__date=today).count()
-    low_stock_count = Product.objects.filter(quantity__lte=5).count()
+    todays_sales = Sale.objects.filter(created_at__date=today, company=company).count()
+    low_stock_count = Product.objects.filter(quantity__lte=5,  company=company).count()
 
     near_expiry_limit = today + timedelta(days=7)
-    expired_count = Product.objects.filter(expiry_date__lt=today).count()
-    near_expiry_count = Product.objects.filter(expiry_date__range=[today, near_expiry_limit]).count()
+    expired_count = Product.objects.filter(expiry_date__lt=today,  company=company).count()
+    near_expiry_count = Product.objects.filter(expiry_date__range=[today, near_expiry_limit],  company=company).count()
     expired_total = expired_count + near_expiry_count
 
     context = {
@@ -38,11 +41,13 @@ def login(request):
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_admin)
 def product_list(request):
+    current_user = request.user
+    company = current_user.company
     search = request.GET.get('search', '').strip()
     category = request.GET.get('category')
     filter_type = request.GET.get('filter')  # low_stock | near_expiry
 
-    products = Product.objects.all().order_by('name')
+    products = Product.objects.filter( company=company).order_by('name')
 
     # -------------------------------------
     # SEARCH
@@ -51,13 +56,14 @@ def product_list(request):
         products = products.filter(
             Q(name__icontains=search) |
             Q(barcode__icontains=search)
+
         )
 
     # -------------------------------------
     # CATEGORY FILTER
     # -------------------------------------
     if category:
-        products = products.filter(category_id=category)
+        products = products.filter(category_id=category, company=company)
 
     # -------------------------------------
     # LOW STOCK FILTER
@@ -73,7 +79,7 @@ def product_list(request):
 
         filtered = []
         for product in products:
-            for batch in product.batches.all():
+            for batch in product.batches.filter(company=company):
                 if batch.expiry_date and batch.expiry_date <= threshold_date:
                     filtered.append(product)
                     break
@@ -86,7 +92,7 @@ def product_list(request):
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
-    categories = Category.objects.all()
+    categories = Category.objects.filter(company=company)
 
     context = {
         'page_obj': page_obj,
@@ -99,34 +105,42 @@ def product_list(request):
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_admin)
 def add_category(request):
+    current_user = request.user
+    company_name = current_user.company.company_name
+    company = current_user.company
     if request.method == "POST":
         name = request.POST['name']
         description = request.POST.get('description', '')
-        if Category.objects.filter(name=name).exists():
+        if Category.objects.filter(name=name, company=company).exists():
             messages.error(request, "Category already exists.")
         else:
-            Category.objects.create(name=name, description=description)
+            Category.objects.create(name=name, description=description, company=company)
             messages.success(request, f"Category '{name}' added successfully.")
         return redirect('add_category')
 
-    categories = Category.objects.all()
+    categories = Category.objects.filter(company=company)
     return render(request, 'add_category.html', {'categories': categories})
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_admin)
 def expired_list(request):
+    current_user = request.user
+    company = current_user.company
     today = date.today()
     near_expiry_limit = today + timedelta(days=7)
-    expired = Product.objects.filter(expiry_date__lt=today)
-    near_expiry = Product.objects.filter(expiry_date__range=[today, near_expiry_limit])
+    expired = Product.objects.filter(expiry_date__lt=today, company=company)
+    near_expiry = Product.objects.filter(expiry_date__range=[today, near_expiry_limit], company=company)
     return render(request, 'expired.html', {'expired': expired, 'near_expiry': near_expiry})
 @login_required(login_url='/accounts/login')
 def product_search(request):
+    current_user = request.user
+    company = current_user.company
     q = request.GET.get("q", "")
 
     products = Product.objects.filter(
         Q(name__icontains=q) |
         Q(barcode__icontains=q) |
-        Q(category__name__icontains=q)
+        Q(category__name__icontains=q), 
+        company=company
     )
 
     data = []
@@ -141,18 +155,21 @@ def product_search(request):
         })
 
     return JsonResponse(data, safe=False)
-@login_required(login_url='/accounts/login')
-@user_passes_test(is_admin)
+@login_required
 def add_product(request):
     if request.method == 'POST':
-        form = ProductForm(request.POST)
+        form = ProductForm(request.POST, user=request.user)
         if form.is_valid():
-            form.save()
+            product = form.save(commit=False)
+            product.company = request.user.company
+            product.save()
             messages.success(request, "Product added successfully!")
             return redirect('add_product')
     else:
-        form = ProductForm()
+        form = ProductForm(user=request.user)
+
     return render(request, 'add_product.html', {'form': form})
+
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_admin)
 def add_stock(request):
@@ -206,23 +223,25 @@ def add_stock(request):
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_admin)
 def edit_product(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
+    # Ensure the product belongs to the user's company
+    product = get_object_or_404(Product, id=product_id, company=request.user.company)
 
     if request.method == 'POST':
-        form = ProductForm(request.POST, instance=product)
+        form = ProductForm(request.POST, instance=product, user=request.user)
         if form.is_valid():
             form.save()
             return redirect('products')
     else:
-        form = ProductForm(instance=product)
+        form = ProductForm(instance=product, user=request.user)
 
     return render(request, 'edit_product.html', {'form': form})
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_admin)
 def product_batches(request, product_id):
+    current_user = request.user
+    company = current_user.company
     product = get_object_or_404(Product, id=product_id)
-    batches = Stock.objects.filter(product=product).order_by('-added_at')
-
+    batches = Stock.objects.filter(product=product, company=company).order_by('-added_at')
     return render(request, 'product_batches.html', {
         'product': product,
         'batches': batches
@@ -230,6 +249,8 @@ def product_batches(request, product_id):
 @login_required
 @user_passes_test(is_admin)
 def add_sale(request):
+    current_user = request.user
+    company = current_user.company
     if request.method == 'POST':
         product_ids = request.POST.getlist('product_id[]')
         quantities = request.POST.getlist('quantity[]')
@@ -246,7 +267,7 @@ def add_sale(request):
             return redirect('add_sale')
 
         # Validate stock for all selected products
-        products = Product.objects.filter(id__in=product_ids)
+        products = Product.objects.filter(id__in=product_ids, company=company)
         product_map = {str(p.id): p for p in products}
         stock_errors = []
 
@@ -292,6 +313,7 @@ def add_sale(request):
 
                 # Create SaleItem
                 SaleItem.objects.create(
+                    company=company,
                     sale=sale,
                     product=product,
                     quantity=qty,
@@ -319,6 +341,8 @@ def add_sale(request):
 @login_required
 @user_passes_test(is_cashier)
 def cashier_add_sale(request):
+    current_user = request.user
+    company = current_user.company
     if request.method == 'POST':
         product_ids = request.POST.getlist('product_id[]')
         quantities = request.POST.getlist('quantity[]')
@@ -335,7 +359,7 @@ def cashier_add_sale(request):
             return redirect('add_sale')
 
         # Validate stock for all selected products
-        products = Product.objects.filter(id__in=product_ids)
+        products = Product.objects.filter(id__in=product_ids, company=company)
         product_map = {str(p.id): p for p in products}
         stock_errors = []
 
@@ -381,6 +405,7 @@ def cashier_add_sale(request):
 
                 # Create SaleItem
                 SaleItem.objects.create(
+                    company=company,
                     sale=sale,
                     product=product,
                     quantity=qty,
@@ -393,7 +418,6 @@ def cashier_add_sale(request):
             sale.sold_by = request.user
 
             sale.save()
-
             # Update daily summary
             ds, created = DailySummary.objects.get_or_create(date=date.today())
             ds.total_sales += grand_total
@@ -408,6 +432,8 @@ def cashier_add_sale(request):
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_admin)
 def sales(request):
+    current_user = request.user
+    company = current_user.company
     today = date.today()
     search = request.GET.get('search', '').strip()
     category = request.GET.get('category')
@@ -416,11 +442,11 @@ def sales(request):
     date_to = request.GET.get('date_to', today)
     sold_by = request.GET.get('sold_by')
 
-    sale_items_qs = SaleItem.objects.select_related('product')
+    sale_items_qs = SaleItem.objects.select_related('product', company=company)
 
     sales = Sale.objects.prefetch_related(
         Prefetch('items', queryset=sale_items_qs, to_attr='sale_items')
-    ).order_by('-created_at')
+    , company=company).order_by('-created_at')
 
     # FILTERS
     if search:
@@ -450,7 +476,6 @@ def sales(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    from authentication.models import CustomUser
     context = {
         'sales': page_obj,
         'page_obj': page_obj,
@@ -467,6 +492,7 @@ def sales(request):
 @user_passes_test(is_cashier)
 def cashier_sales(request):
     current_user = request.user
+    company = current_user.company
     today = date.today()
     search = request.GET.get('search', '').strip()
     category = request.GET.get('category')
@@ -474,7 +500,7 @@ def cashier_sales(request):
     date_from = request.GET.get('date_from', today)
     date_to = request.GET.get('date_to', today)
 
-    sale_items_qs = SaleItem.objects.select_related('product')
+    sale_items_qs = SaleItem.objects.select_related('product', company=company)
 
     # 🔥 Filter sales ONLY for current cashier
     sales = (
@@ -524,8 +550,10 @@ def cashier_sales(request):
 @user_passes_test(is_cashier)
 def cashier_sales_detail(request, sale_id):
     current_user = request.user
+    company = current_user.company
+    current_user = request.user
     sale = get_object_or_404(Sale, id=sale_id, sold_by=current_user)
-    items = SaleItem.objects.filter(sale=sale)  # all products in this sale
+    items = SaleItem.objects.filter(sale=sale, company=company)  # all products in this sale
     grand_total = items.aggregate(total=Sum('total_price'))['total'] or 0
 
     sold_by = sale.sold_by.get_full_name()
@@ -554,12 +582,15 @@ def sale_detail(request, sale_id):
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_admin)
 def near_expiry_stocks(request):
+    current_user = request.user
+    company = current_user.company
     threshold_date = date.today() + timedelta(days=90)
 
     # Fetch all Stock batches expiring in the next 90 days
     near_expiry_batches = Stock.objects.filter(
         expiry_date__lte=threshold_date,
-        expiry_date__gte=date.today()
+        expiry_date__gte=date.today(), 
+        company=company
     ).select_related('product').order_by('expiry_date')
 
     context = {

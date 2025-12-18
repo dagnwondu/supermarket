@@ -25,7 +25,7 @@ class CustomUser(AbstractUser):
         default=UserType.CASHIER
     )
     middle_name = models.CharField(max_length=100, null=True, blank=True)
-    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, null=True, blank=True)
 
     def get_full_name(self):
         return f"{self.first_name} {self.middle_name}"

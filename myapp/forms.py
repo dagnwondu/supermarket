@@ -13,23 +13,18 @@ class ProductForm(forms.ModelForm):
         model = Product
         fields = ['name', 'category', 'barcode', 'selling_price']
         widgets = {
-            'name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Enter product name'
-            }),
-            'category': forms.Select(attrs={
-                'class': 'form-select'
-            }),
-            'barcode': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Optional barcode'
-            }),
-            'selling_price': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'step': '0.01',
-                'placeholder': 'Selling price'
-            }),
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter product name'}),
+            'category': forms.Select(attrs={'class': 'form-select'}),
+            'barcode': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Optional barcode'}),
+            'selling_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'Selling price'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super(ProductForm, self).__init__(*args, **kwargs)
+        if user:
+            self.fields['category'].queryset = Category.objects.filter(company=user.company)
+
 class StockForm(forms.ModelForm):
     class Meta:
         model = Stock
