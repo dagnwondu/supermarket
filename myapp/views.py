@@ -286,7 +286,7 @@ def add_sale(request):
 
         # All validations passed, save sale
         with transaction.atomic():
-            sale = Sale.objects.create(total_price=0)
+            sale = Sale.objects.create(total_price=0, company=company)
             grand_total = 0
 
             for pid, qty in zip(product_ids, quantities):
@@ -378,7 +378,7 @@ def cashier_add_sale(request):
 
         # All validations passed, save sale
         with transaction.atomic():
-            sale = Sale.objects.create(total_price=0)
+            sale = Sale.objects.create(total_price=0, company=company)
             grand_total = 0
 
             for pid, qty in zip(product_ids, quantities):
@@ -435,6 +435,7 @@ def sales(request):
     current_user = request.user
     company = current_user.company
     today = date.today()
+
     search = request.GET.get('search', '').strip()
     category = request.GET.get('category')
     product_id = request.GET.get('product')
@@ -442,23 +443,33 @@ def sales(request):
     date_to = request.GET.get('date_to', today)
     sold_by = request.GET.get('sold_by')
 
-    sale_items_qs = SaleItem.objects.select_related('product', company=company)
+    sale_items_qs = SaleItem.objects.select_related('product')
 
-    sales = Sale.objects.prefetch_related(
-        Prefetch('items', queryset=sale_items_qs, to_attr='sale_items')
-    , company=company).order_by('-created_at')
+    sales = (
+        Sale.objects
+        .filter(company=company)  # ✅ FIXED
+        .prefetch_related(
+            Prefetch('items', queryset=sale_items_qs, to_attr='sale_items')
+        )
+        .order_by('-created_at')
+    )
 
     # FILTERS
     if search:
         sales = sales.filter(items__product__name__icontains=search).distinct()
+
     if category:
         sales = sales.filter(items__product__category_id=category).distinct()
+
     if product_id:
         sales = sales.filter(items__product_id=product_id).distinct()
+
     if date_from:
         sales = sales.filter(created_at__date__gte=date_from)
+
     if date_to:
         sales = sales.filter(created_at__date__lte=date_to)
+
     if sold_by:
         sales = sales.filter(sold_by=sold_by)
 
@@ -468,10 +479,8 @@ def sales(request):
         sale.total_price = sum(item.total_price for item in sale.sale_items)
         sale.product_names = ", ".join(item.product.name for item in sale.sale_items)
 
-    # 🔥 AGGREGATE TOTAL
     grand_total_price = sum(sale.total_price for sale in sales)
 
-    # PAGINATION
     paginator = Paginator(sales, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -479,15 +488,13 @@ def sales(request):
     context = {
         'sales': page_obj,
         'page_obj': page_obj,
-        'categories': Category.objects.all(),
-        'products': Product.objects.all(),
+        'categories': Category.objects.filter(company=company),
+        'products': Product.objects.filter(company=company),
         'values': request.GET,
-        'users': CustomUser.objects.all(),
-        'grand_total_price': grand_total_price,   # ✅ Pass to template
+        'users': CustomUser.objects.filter(company=company),
+        'grand_total_price': grand_total_price,
     }
     return render(request, 'sales.html', context)
-
-
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_cashier)
 def cashier_sales(request):
@@ -500,7 +507,7 @@ def cashier_sales(request):
     date_from = request.GET.get('date_from', today)
     date_to = request.GET.get('date_to', today)
 
-    sale_items_qs = SaleItem.objects.select_related('product', company=company)
+    sale_items_qs = SaleItem.objects.select_related('product')
 
     # 🔥 Filter sales ONLY for current cashier
     sales = (
@@ -539,8 +546,8 @@ def cashier_sales(request):
     context = {
         'sales': page_obj,
         'page_obj': page_obj,
-        'categories': Category.objects.all(),
-        'products': Product.objects.all(),
+        'categories': Category.objects.filter(company=company),
+        'products': Product.objects.filter(company=company),
         'values': request.GET,
         'grand_total_price': grand_total_price,
     }
@@ -597,7 +604,6 @@ def near_expiry_stocks(request):
         'near_expiry_batches': near_expiry_batches,
     }
     return render(request, 'near_expiry_stocks.html', context)
-
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_admin)
 def stock_deatil(request, stock_id):
@@ -610,16 +616,24 @@ def stock_deatil(request, stock_id):
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_admin)
 def delete_stock(request, stock_id):
-    
-    stock = get_object_or_404(Stock, id = stock_id)
+    company = request.user.company
+
+    # ✅ Only allow deleting stock from the same company
+    stock = get_object_or_404(
+        Stock,
+        id=stock_id,
+        company=company
+    )
+
     stock.delete()
     return redirect('near_expiry_stocks')
-
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_admin)
 def manage_users(request):
+    current_user = request.user
+    company = current_user.company
     user = request.user
-    users = CustomUser.objects.all().exclude(is_superuser = True)
+    users = CustomUser.objects.filter(company=company).exclude(is_superuser = True)
     if request.method == 'POST':
         form = UserUpdateForm(request.POST)
         user_form = UserForm(request.POST)
@@ -645,55 +659,114 @@ def manage_users(request):
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_admin)
 def delete_user(request, user_id):
-    # Only allow deletion if the user exists
-    user = get_object_or_404(CustomUser, id=user_id)
-    # Prevent deletion of yourself
-    if request.user == user:
+    current_user = request.user
+    company = current_user.company
+
+    # ✅ Fetch user ONLY if same company
+    user = get_object_or_404(
+        CustomUser,
+        id=user_id,
+        company=company
+    )
+
+    # 🚫 Prevent deleting yourself
+    if current_user == user:
         messages.error(request, "You cannot delete yourself.")
-        return redirect(reverse('manage_users'))  # Update 'manage_users' with your actual view name
-    # Delete the user
+        return redirect(reverse('manage_users'))
+
     user.delete()
     messages.success(request, "User deleted successfully.")
-    return redirect(reverse('manage_users'))  # Update 'manage_users' with your actual view name
+    return redirect(reverse('manage_users'))
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_admin)
 def update_user(request, user_id):
-    user = get_object_or_404(CustomUser, id=user_id)
+    current_user = request.user
+    company = current_user.company
+
+    # ✅ Only fetch user from the same company
+    user = get_object_or_404(
+        CustomUser,
+        id=user_id,
+        company=company
+    )
+
     form = UserUpdateForm(instance=user)
-    return render(request, "update_user.html", {"form": form, "user": user})
+
+    return render(
+        request,
+        "update_user.html",
+        {
+            "form": form,
+            "user": user
+        }
+    )
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_admin)
 def update_user_submit(request, user_id):
-    user = get_object_or_404(CustomUser, id=user_id)
-    form = UserUpdateForm(instance=user)
+    current_user = request.user
+    company = current_user.company
+
+    # ✅ Company-scoped fetch
+    user = get_object_or_404(
+        CustomUser,
+        id=user_id,
+        company=company
+    )
 
     if request.method == "POST":
         form = UserUpdateForm(request.POST, instance=user)
-        if form.is_valid():
-            original_user = CustomUser.objects.get(id=user_id)  # Keep original data
-            cleaned_data = form.cleaned_data  # Grab updated values
 
-            form.save()  # Save after logging changes
+        if form.is_valid():
+            # ✅ Keep original values safely (already company-scoped)
+            original_user = CustomUser.objects.get(
+                id=user_id,
+                company=company
+            )
+
+            cleaned_data = form.cleaned_data
+
+            form.save()
 
             messages.success(request, f"User {user} updated successfully.")
             return redirect(reverse('manage_users'))
+
         else:
             messages.error(request, "Please correct the errors below.")
 
-    return render(request, "manage_users.html", {"form": form, "user": user})
+    else:
+        form = UserUpdateForm(instance=user)
+
+    return render(
+        request,
+        "manage_users.html",
+        {
+            "form": form,
+            "user": user
+        }
+    )
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_admin)
 def change_password(request, user_id):
-    user = CustomUser.objects.get(id=user_id)
+    current_user = request.user
+    company = current_user.company
+
+    # ✅ Fetch user ONLY from same company
+    user = get_object_or_404(
+        CustomUser,
+        id=user_id,
+        company=company
+    )
+
     if request.method == "POST":
         new_password = request.POST.get('new_password')
         confirm_password = request.POST.get('confirm_password')
 
-        if new_password == confirm_password:
+        if new_password and new_password == confirm_password:
             user.set_password(new_password)
             user.save()
+
             messages.success(request, "Password changed successfully!")
         else:
             messages.error(request, "Passwords do not match.")
 
-    return redirect('manage_users')  # Adjust to your URL name
+    return redirect('manage_users')

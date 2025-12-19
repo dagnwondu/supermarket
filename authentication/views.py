@@ -79,23 +79,24 @@ def admin_view(request):
 @login_required(login_url='/accounts/login')
 @user_passes_test(is_cashier)
 def cashier_view(request):
-    company_name = current_user.company.company_name
+    current_user = request.user
+    company = current_user.company    
     today = now().date()
     current_user = request.user
     # Aggregate total quantity and total revenue from SaleItem
-    today_sales = SaleItem.objects.filter(sale__created_at__date=today, sale__sold_by = current_user, company_name=company_name).aggregate(
+    today_sales = SaleItem.objects.filter(sale__created_at__date=today, sale__sold_by = current_user, company=company).aggregate(
         total_quantity=Sum('quantity'),
         total_revenue=Sum('total_price')
     )
-    low_stock_count = sum(1 for p in Product.objects.filter(company_name=company_name) if p.low_stock)
-    products_count = Product.objects.filter(ompany_name=company_name).count()
+    low_stock_count = sum(1 for p in Product.objects.filter(company=company) if p.low_stock)
+    products_count = Product.objects.filter(company=company).count()
     today = date.today()
     near_expiry_limit = today + timedelta(days=90)
-    expired_count = Stock.objects.filter(expiry_date__lt=today, company_name=company_name).count()
-    near_expiry_count = Stock.objects.filter(expiry_date__range=[today, near_expiry_limit], company_name=company_name).count()
-    near_expiry = Stock.objects.filter(expiry_date__range=[today, near_expiry_limit], company_name=company_name)
+    expired_count = Stock.objects.filter(expiry_date__lt=today, company=company).count()
+    near_expiry_count = Stock.objects.filter(expiry_date__range=[today, near_expiry_limit], company=company).count()
+    near_expiry = Stock.objects.filter(expiry_date__range=[today, near_expiry_limit], company=company)
     context = {
-        'company_name':company_name,
+        'company':company,
         "expired_count":expired_count,
         'near_expiry':near_expiry,
         'near_expiry_count':near_expiry_count,
